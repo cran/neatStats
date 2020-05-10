@@ -27,7 +27,8 @@ prnt = function(...) {
         c('CHAR_PLUSMIN', '\u00b1'),
         c('CHAR_X', '\u00d7'),
         c('CHAR_ETA', '\u03b7'),
-        c('CHAR_EPS', '\u03b5')
+        c('CHAR_EPS', '\u03b5'),
+        c('CHAR_INF', '\u221e')
     )
     Encoding(to_print) = "UTF-8"
     for (pair in change_pairs) {
@@ -103,7 +104,7 @@ edges = function(the_num, round_to, no_null = FALSE) {
     }
 }
 
-get_e_corrs = function(mauchly, e_corrects, e_correction) {
+get_e_corrs = function(mauchly, e_corrects, e_correction, shush) {
     e_corrs_list = list()
     for (indx in 1:length(e_corrects$Effect)) {
         s_name = e_corrects$Effect[indx]
@@ -150,9 +151,9 @@ get_e_corrs = function(mauchly, e_corrects, e_correction) {
         } else {
             m_corr = '.'
         }
-
-        prnt(m_name, ': W = ', ro(m_w, 3), ', p = ',  ro(m_pval, 3), m_corr)
-
+        if (shush == FALSE) {
+            prnt(m_name, ': W = ', ro(m_w, 3), ', p = ',  ro(m_pval, 3), m_corr)
+        }
     }
     return(spher_real_corrs)
 }
