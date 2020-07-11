@@ -6,13 +6,21 @@ One main point is that all functions use data frames with single row per subject
 
 ### Installation in R
 
-Just run:
+To install the stable version from [CRAN](https://cran.r-project.org/ "The Comprehensive R Archive Network"), just run:
 
 ```R
 install.packages("neatStats")
 ```
 
 Then load with: `library("neatStats")`
+
+Alternatively, if you want to install the latest (and potentially unstable) version from this repository:
+
+```
+install.packages("devtools") # if "devtools" package is not yet installed
+library("devtools")
+install_github("gasparl/neatstats")
+```
 
 ### Usage
 
@@ -25,3 +33,5 @@ For details about each function, see [the manual](https://github.com/gasparl/nea
 * If you have any question about statistics, ask a statistician (not me).
 * If you run into an error despite carefully following the [documentation](https://github.com/gasparl/neatstats/blob/master/neatStats.pdf "neatStats.pdf"), [open a new issue](https://github.com/gasparl/neatstats/issues "Issues") or [email me](mailto:lkcsgaspar@gmail.com).
 * If you have sound reason to believe that some of the presented statistics (or functions) are really not optimal and/or could be improved in some plausible way, [email me](mailto:lkcsgaspar@gmail.com).
+
+[![DOI](https://zenodo.org/badge/187226036.svg)](https://zenodo.org/badge/latestdoi/187226036) ![](http://cranlogs.r-pkg.org/badges/neatStats?color=8585ad "neatStats CRAN download count")

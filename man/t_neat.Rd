@@ -8,9 +8,12 @@ t_neat(
   var1,
   var2,
   pair = FALSE,
+  nonparametric = FALSE,
   greater = NULL,
   ci = NULL,
   bf_added = TRUE,
+  bf_rscale = sqrt(0.5),
+  bf_sample = 1000,
   auc_added = FALSE,
   r_added = TRUE,
   for_table = FALSE,
@@ -35,6 +38,9 @@ t_neat(
 \item{pair}{Logical. If \code{TRUE}, all tests (t, BF, AUC) are conducted for
 paired samples. If \code{FALSE} (default) for independent samples.}
 
+\item{nonparametric}{Logical (\code{FALSE} by default). If \code{TRUE}, uses
+nonparametric (rank-based, "Wilcoxon") t-tests (including BFs; see Details).}
+
 \item{greater}{\code{NULL} or string (or number); optionally specifies
 one-sided tests (t and BF): either "1" (\code{var1} mean expected to be
 greater than \code{var2} mean) or "2" (\code{var2} mean expected to be
@@ -45,6 +51,13 @@ two-sided.}
 
 \item{bf_added}{Logical. If \code{TRUE} (default), Bayes factor is calculated
 and displayed.}
+
+\item{bf_rscale}{The scale of the prior distribution (\code{0.707} by
+default).}
+
+\item{bf_sample}{Number of samples used to estimate Bayes factor (\code{1000}
+by default). More samples (e.g. \code{10000}) take longer time but give more
+stable BF.}
 
 \item{auc_added}{Logical. If \code{TRUE}, AUC is calculated and displayed.
 (\code{FALSE} by default.)}
@@ -114,20 +127,28 @@ Prints t-test statistics (including Cohen's d with CI, BF, and AUC, as
  \code{density_plot}.
 }
 \description{
-Welch's \code{\link[stats:t.test]{t-test}} results
- including Cohen's d with confidence interval (CI),
+Welch's \code{\link[stats:t.test]{t-test}} results including
+ Cohen's d with confidence interval (CI),
  \code{\link[BayesFactor:ttestBF]{Bayes factor}} (BF), and
  \code{\link[pROC:auc]{area under the receiver operating characteristic
- curve}} (AUC).
+ curve}} (AUC). For non-parametric version,
+ \code{\link[stats:wilcox.test]{Wilcoxon test}} results (Mann–Whitney U test,
+ aka "Wilcoxon rank-sum test", for independent samples; Wilcoxon signed-rank
+ test for paired samples; along with corresponding rank-based BFs as per van
+ Doorn et al., 2020).
 }
 \details{
-The Bayes factor (BF) is always calculated with the default r-scale of
-\code{0.707}. BF supporting null hypothesis is denoted as BF01, while that
-supporting alternative hypothesis is denoted as BF10. When the BF is smaller
-than 1 (i.e., supports null hypothesis), the reciprocal is calculated (hence,
-BF10 = BF, but BF01 = 1/BF). When the BF is greater than or equal to 10000,
-scientific (exponential) form is reported for readability. (The original full
-BF number is available in the returned named vector as \code{bf}.)
+The Bayes factor (BF) supporting null hypothesis is denoted as BF01, while
+that supporting alternative hypothesis is denoted as BF10. When the BF is
+smaller than 1 (i.e., supports null hypothesis), the reciprocal is calculated
+(hence, BF10 = BF, but BF01 = 1/BF). When the BF is greater than or equal to
+10000, scientific (exponential) form is reported for readability. (The
+original full BF number is available in the returned named vector as
+\code{bf}.)
+
+
+For simplicity, Cohen's d is reported for nonparametric tests too: you may
+however want to consider reporting alternative effect sizes in this case.
 
 The original \code{\link[pROC:auc]{pROC::auc}} function, by default, always
 returns an AUC greater than (or equal to) .5, assuming that the prediction
@@ -186,10 +207,9 @@ results$stats['bf'] # get precise BF value
 
 }
 \references{
-Delacre, M., Lakens, D., & Leys, C. (2017). Why psychologists
-should by default use Welch's t-test instead of Student's t-test.
-International Review of Social Psychology, 30(1).
-\doi{http://doi.org/10.5334/irsp.82}
+Delacre, M., Lakens, D., & Leys, C. (2017). Why psychologists should by
+default use Welch's t-test instead of Student's t-test. International Review
+of Social Psychology, 30(1). \doi{http://doi.org/10.5334/irsp.82}
 
 Kelley, K. (2007). Methods for the behavioral, educational, and social
 sciences: An R package. Behavior Research Methods, 39(4), 979-984.
@@ -199,6 +219,11 @@ Robin, X., Turck, N., Hainard, A., Tiberti, N., Lisacek, F., Sanchez, J. C., &
 Muller, M. (2011). pROC: an open-source package for R and S+ to analyze and
 compare ROC curves. BMC bioinformatics, 12(1), 77.
 \doi{https://doi.org/10.1186/1471-2105-12-77}
+
+van Doorn, J., Ly, A., Marsman, M., & Wagenmakers, E.-J. (2020). Bayesian
+rank-based hypothesis testing for the rank sum test, the signed rank test, and
+Spearman’s rho. Journal of Applied Statistics, 1–23.
+\doi{https://doi.org/10.1080/02664763.2019.1709053}
 }
 \seealso{
 \code{\link{corr_neat}}, \code{\link{roc_neat}}
