@@ -10,8 +10,10 @@ t_neat(
   pair = FALSE,
   nonparametric = FALSE,
   greater = NULL,
+  norm_tests = "latent",
+  norm_plots = FALSE,
   ci = NULL,
-  bf_added = TRUE,
+  bf_added = FALSE,
   bf_rscale = sqrt(0.5),
   bf_sample = 1000,
   auc_added = FALSE,
@@ -22,7 +24,9 @@ t_neat(
   round_auc = 3,
   auc_greater = "1",
   hush = FALSE,
-  plot_densities = FALSE,
+  plots = FALSE,
+  rug_size = 4,
+  aspect_ratio = 1,
   y_label = "density estimate",
   x_label = "\\nvalues",
   factor_name = NULL,
@@ -39,13 +43,30 @@ t_neat(
 paired samples. If \code{FALSE} (default) for independent samples.}
 
 \item{nonparametric}{Logical (\code{FALSE} by default). If \code{TRUE}, uses
-nonparametric (rank-based, "Wilcoxon") t-tests (including BFs; see Details).}
+nonparametric (rank-based, "Wilcoxon") t-tests (including BFs; see Notes).}
 
 \item{greater}{\code{NULL} or string (or number); optionally specifies
 one-sided tests (t and BF): either "1" (\code{var1} mean expected to be
 greater than \code{var2} mean) or "2" (\code{var2} mean expected to be
 greater than \code{var1} mean). If \code{NULL} (default), the test is
 two-sided.}
+
+\item{norm_tests}{Normality tests. Any or all of the following character input
+is accepted (as a single string or a character vector; case-insensitive):
+\code{"W"} (Shapiro-Wilk), \code{"K2"} (D'Agostino-Pearson), \code{"A2"}
+(Anderson-Darling), \code{"JB"} (Jarque-Bera); see Notes. Two other options
+are \code{"all"} (to choose all four previous tests at the same time) or
+\code{"latent"} (default value; prints all tests only if
+\code{nonparametric} is set to \code{FALSE} and any of the four tests gives
+a p value below .05). Each normality test is performed for the difference
+values between the two variables in case of paired samples, or for each of
+the two variables for unpaired samples. Set to \code{"none"} to disable
+(i.e., not to perform any normality tests).}
+
+\item{norm_plots}{If \code{TRUE} and \code{norm_tests} is not \code{"none"},
+displays density, histogram, and Q-Q plots (and scatter plots for paired
+tests) for each of the two variable (and differences for pairwise
+observations, in case of paired samples).}
 
 \item{ci}{Numeric; confidence level for returned CIs for Cohen's d and AUC.}
 
@@ -59,8 +80,10 @@ default).}
 by default). More samples (e.g. \code{10000}) take longer time but give more
 stable BF.}
 
-\item{auc_added}{Logical. If \code{TRUE}, AUC is calculated and displayed.
-(\code{FALSE} by default.)}
+\item{auc_added}{Logical (\code{FALSE} by default). If \code{TRUE}, AUC is
+calculated and displayed (including TPR and TNR, i.e., true positive and
+true negative rates, i.e. sensitivity and specificity, using an optimal
+cutoff value, i.e. threshold, that provides maximal TPR and TNR).}
 
 \item{r_added}{Logical. If \code{TRUE} (default), Pearson correlation is
 calculated and displayed in case of paired comparison.}
@@ -86,12 +109,23 @@ confused with one-sided tests; see Details.}
 
 \item{hush}{Logical. If \code{TRUE}, prevents printing any details to console.}
 
-\item{plot_densities}{Logical. If \code{TRUE}, creates a density plot (i.e.,
-\code{\link[stats:density]{Gaussian kernel density estimates}}) from the two
-variables. When \code{auc_added} is \code{TRUE} (and the AUC is at least
-.5), the best threshold value for classification (maximal differentiation
-accuracy) is added to the plot as vertical line. (In case of multiple best
-thresholds with identical overall accuracy, all are added.)}
+\item{plots}{Logical (or \code{NULL}). If \code{TRUE}, creates a combined
+density plot (i.e., \code{\link[stats:density]{Gaussian kernel density
+estimates}}) from the two variables. Includes dashed vertical lines to
+indicate means of each of the two variables. If \code{nonparametric} is set
+to \code{TRUE}, medians are calculated for these dashed lines instead of
+means. When \code{auc_added} is \code{TRUE} (and the AUC is at least .5),
+the best threshold value for classification (maximal differentiation
+accuracy using Youden's index) is added to the plot as solid vertical line.
+(In case of multiple best thresholds with identical overall accuracy, all
+are added.) If \code{NULL}, same as if \code{TRUE} except that histogram is
+added to the background.}
+
+\item{rug_size}{Numeric (\code{4} by default): size of the rug ticks below the
+density plot. Set to \code{0} (zero) to omit rug plotting.}
+
+\item{aspect_ratio}{Aspect ratio of the plots: \code{1} (\code{1}/\code{1}) by
+default. (Set to \code{NULL} for dynamic aspect ratio.)}
 
 \item{y_label}{String or \code{NULL}; the label for the \code{y} axis.
 (Default: \code{"density estimate"}.)}
@@ -122,9 +156,9 @@ Prints t-test statistics (including Cohen's d with CI, BF, and AUC, as
  object, to be used e.g. with the \code{\link{roc_neat}} function. The other
  is '\code{best_thresholds}', which contains the best threshold value(s) for
  classification, along with corresponding specificity and sensitivity.
- Finally, if \code{plot_densities} is \code{TRUE}, the plot is displayed as
- well as returned as a \code{\link[ggplot2]{ggplot}} object, named
- \code{density_plot}.
+ Finally, if \code{plots} is \code{TRUE} (or \code{NULL}), the plot is
+ displayed as well as returned as a \code{\link[ggplot2]{ggplot}} object,
+ named \code{t_plot}.
 }
 \description{
 Welch's \code{\link[stats:t.test]{t-test}} results including
@@ -173,13 +207,25 @@ values for males. (Or, easier, just add the expected larger values as
 The Welch's t-test is calculated via
 \code{\link[stats:t.test]{stats::t.test}}.
 
+#'Normality tests are all calculated via
+\code{\link[PoweR:statcompute]{PoweR::statcompute}}, selected based on the
+recommendation of Lakens (2015), quoting Yap and Sim (2011, p. 2153): "If the
+distribution is symmetric with low kurtosis values (i.e. symmetric
+short-tailed distribution), then the D'Agostino-Pearson and Shapiro-Wilkes
+tests have good power. For symmetric distribution with high sample kurtosis
+(symmetric long-tailed), the researcher can use the JB, Shapiro-Wilkes, or
+Anderson-Darling test." See url{https://github.com/Lakens/perfect-t-test} for
+more details.
+
 Cohen's d and its confidence interval are calculated, using the t value, via
 \code{\link[MBESS:ci.smd]{MBESS::ci.smd}} for independent samples (as
 standardized mean difference) and via \code{\link[MBESS:ci.sm]{MBESS::ci.sm}}
 for paired samples (as standardized mean).
 
-The Bayes factor is calculated via
-\code{\link[BayesFactor:ttestBF]{BayesFactor::ttestBF}}.
+The parametric Bayes factor is calculated via
+\code{\link[BayesFactor:ttestBF]{BayesFactor::ttestBF}}. The nonparametric
+(rank-based) Bayes factor is a contribution by Johnny van Doorn; the original
+source code is available via \url{https://osf.io/gny35/}.
 
 The correlation and its CI are calculated via
 \code{\link[stats:cor.test]{stats::cor.test}}, and is always two-sided, always
@@ -215,6 +261,15 @@ Kelley, K. (2007). Methods for the behavioral, educational, and social
 sciences: An R package. Behavior Research Methods, 39(4), 979-984.
 \doi{https://doi.org/10.3758/BF03192993}
 
+Lafaye de Micheaux, P., & Tran, V. A. (2016). PoweR: A Reproducible Research
+Tool to Ease Monte Carlo Power Simulation Studies for Goodness-of-fit Tests in
+R. Journal of Statistical Software, 69(3).
+\doi{https://doi.org/10.18637/jss.v069.i03}
+
+Lakens, D. (2015). The perfect t-test (version 1.0.0). Retrieved from
+https://github.com/Lakens/perfect-t-test.
+\doi{https://doi.org/10.5281/zenodo.17603}
+
 Robin, X., Turck, N., Hainard, A., Tiberti, N., Lisacek, F., Sanchez, J. C., &
 Muller, M. (2011). pROC: an open-source package for R and S+ to analyze and
 compare ROC curves. BMC bioinformatics, 12(1), 77.
@@ -224,6 +279,10 @@ van Doorn, J., Ly, A., Marsman, M., & Wagenmakers, E.-J. (2020). Bayesian
 rank-based hypothesis testing for the rank sum test, the signed rank test, and
 Spearman’s rho. Journal of Applied Statistics, 1–23.
 \doi{https://doi.org/10.1080/02664763.2019.1709053}
+
+Yap, B. W., & Sim, C. H. (2011). Comparisons of various types of normality
+tests. Journal of Statistical Computation and Simulation, 81(12), 2141–2155.
+\doi{https://doi.org/10.1080/00949655.2010.520163}
 }
 \seealso{
 \code{\link{corr_neat}}, \code{\link{roc_neat}}

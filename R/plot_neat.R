@@ -1,15 +1,22 @@
-#'@title Plots of factors
+#'@title Plots of Means and of Dispersion
 #'
-#'@description Bar and line \code{\link[ggplot2:ggplot]{plots}} for factorial
-#'  designs.
-#'
-#'@param data_per_subject Data frame or name of data frame as string. Should
-#'  contain all values (measurements/observations) in a single row per each
-#'  subject.
-#'@param values Vector of strings; column name(s) in the \code{data_per_subject}
-#'  data frame. Each column should contain a single dependent variable: thus, to
-#'  plot repeated (within-subject) measurements, each specified column should
-#'  contain one measurement.
+#'@description Primarily for line and bar \code{\link[ggplot2:ggplot]{plots}}
+#'  for factorial designs. Otherwise (if no \code{data_per_subject} is given)
+#'  descriptive dispersion plots (histogram, density, or box plots) for a
+#'  continuous variable. (For the latter, only the parameters \code{values},
+#'  \code{parts}, \code{part_colors}, and \code{binwidth} are used, the rest are
+#'  ignored.)
+#'@param data_per_subject Data frame containing all values
+#'  (measurements/observations for a factorial design) in a single row per each
+#'  subject. Otherwise, if no data frame is given (default: \code{NULL}),
+#'  histogram, density, or box plots will be returned for a continuous variable
+#'  (numeric vector).
+#'@param values For plots of means (factorial designs): vector of strings;
+#'  column name(s) in the \code{data_per_subject} data frame. Each column should
+#'  contain a single dependent variable: thus, to plot repeated (within-subject)
+#'  measurements, each specified column should contain one measurement. For
+#'  descriptive dispersion plots (if \code{data_per_subject} is \code{NULL}), a
+#'  numeric vector is expected.
 #'@param within_ids \code{NULL} (default), string, or named list. In case of no
 #'  within-subject factors, leave as \code{NULL}. In case of a single within
 #'  subject factor, a single string may be given to optionally provide custom
@@ -65,32 +72,60 @@
 #'  for any number of differing adjacent bars are interpolated. (If the number
 #'  of given colors equal the number of different bars, the precise colors will
 #'  correspond to each bar.) The default \code{c('#333333', '#AAAAAA')} gives a
-#'  color gradient from dark gray to light gray.
+#'  color gradient from dark gray to light gray. (In case of a single factor,
+#'  the first given colors is taken.)
 #'@param line_colors Vector of strings, specifying colors from which all colors
 #'  for any number of differing vertically aligned dots and corresponding lines
 #'  are interpolated. The default \code{c('#555555', '#000000')} gives a color
-#'  gradient from dark gray to black.
+#'  gradient from dark gray to black. (In case of a single factor, the first
+#'  given colors is taken.)
 #'@param row_number Number. In case of multiple panels, the number of rows in
 #'  which the panels should be arranged. For example, with the default
 #'  \code{row_number = 1}, all panels will be displayed in one vertically
 #'  aligned row.
 #'@param method A function (default: \code{mean}) for the calculation of the
 #'  main statistics (bar or dot heights).
-#'@param eb_method A function (default: \code{sd}) for the calculation of the
-#'  error bar size (as a single value used for both directions of the error
-#'  bar). If set to \code{NULL}, no error bar is displayed.
+#'@param eb_method A function (default: \code{\link{mean_ci}} for 95% CI) for
+#'  the calculation of the error bar size (as a single value used for both
+#'  directions of the error bar). If set to \code{NULL}, no error bar is
+#'  displayed.#'
+#'@param numerics If \code{FALSE} (default), returns
+#'  \code{\link[ggplot2]{ggplot}} object. If set to \code{TRUE}, returns only
+#'  the numeric aggregated data per grouping factors, as specified by
+#'  \code{method} and \code{eb_method} functions. If set to any string (e.g.
+#'  \code{"both"}), returns the numeric aggregated data and at the same time
+#'  \code{\link[graphics:plot]{draws}} the plot.
+#'@param hush Logical. If \code{TRUE}, prevents printing aggregated values.
+#'@param parts For dispersion plots only (if no \code{data_per_subject} is
+#'  given). A vector of characters that specify which types of overlayed types
+#'  to plot: \code{"h"} for histogram, \code{"d"} for density, \code{"n"}
+#'  normally distributed density (using the mean and standard deviation of the
+#'  given variable), \code{"b"} for boxplot. (All are included by default:
+#'  \code{parts = c("h", "d", "n", "b")}).
+#'@param part_colors For dispersion plots only (if no \code{data_per_subject} is
+#'  given). A named that can specify and thereby override default colors and
+#'  alpha (transparency) of each plot type. Colors can be given by adding "c" to
+#'  the plot type letter, e.g. \code{c(hc = "blue")} for blue histogram. Alpha
+#'  can be given by adding "a" to the plot type letter, e.g. \code{c(ha = 0)}
+#'  for completely transparent histogram. Any number may be given: e.g. a dark
+#'  red transparent histogram with green boxplot would be \code{part_colors =
+#'  c(hc = "#cc0000", ha = 0.1, bc = "green")}.
+#'@param binwidth For dispersion plots only (if no \code{data_per_subject} is
+#'  given). Binwidth for histograms. If \code{NULL} (default), Freedman–Diaconis
+#'  rule is used if it produces at least 10 bins – otherwise 1bandwidth is
+#'  calculated for 10 bins.
 #'
-#'@return A \code{\link[ggplot2]{ggplot}} plot object. (This object may be
-#'  further modified or adjusted via regular \code{\link[ggplot2]{ggplot}}
-#'  methods.)
+#'@return By default, a \code{\link[ggplot2]{ggplot}} plot object. (This object
+#'  may be further modified or adjusted via regular
+#'  \code{\link[ggplot2]{ggplot}} methods.) If so set (\code{numerics}),
+#'  aggregated values as specified by the methods.
 #'
-#' @note The number of factors (within and between together) must be either two
-#'   or three. Plot for a single factor would make little sense, while more than
-#'   three is difficult to clearly depict in a simple plot. (In the latter case,
-#'   you probably want to build an appropriate graph using
-#'   \code{\link[ggplot2]{ggplot}} directly; but you can also just divide the
-#'   data to produce several three-factor plots, after which you can use e.g.
-#'   \code{ggpubr}'s \code{ggarrange} to easily collate the plots.)
+#' @note More than three factors is not allowed: it would make little sense and
+#'   it would be difficult to clearly depict in a simple figure. (However, you
+#'   can build an appropriate graph using \code{\link[ggplot2]{ggplot}}
+#'   directly; but you can also just divide the data to produce several
+#'   three-factor plots, after which you can use e.g. \code{ggpubr}'s
+#'   \code{ggarrange} to easily collate the plots.)
 #'
 #' @seealso \code{\link{anova_neat}}, \code{\link{mean_ci}}, \code{\link{se}}
 #' @examples
@@ -289,7 +324,7 @@
 #'
 #' # now include the 'group_id' factor in the plot
 #' plot_neat(
-#'     'pic_ratings',
+#'     pic_ratings,
 #'     values = c(
 #'         'rating_fright_low_disgust_low',
 #'         'rating_fright_high_disgust_low',
@@ -303,10 +338,27 @@
 #'     between_vars = 'group_id'
 #' )
 #'}
+#'
+#'## DISPERSION PLOTS
+#'
+#'plot_neat(values = rnorm(100))
+#'
+#'# with smaller binwidth (hence more bins)
+#'plot_neat(values = rnorm(100), binwidth = 0.2)
+#'
+#'# without normal distribution line
+#'plot_neat(values = rnorm(100), parts = c('h', 'd', 'b'))
+#'
+#'# without histrogram
+#'plot_neat(values = rnorm(100), parts = c('d', 'n', 'b'))
+#'
+#'# blue density, fully opaque histogram
+#'plot_neat(values = rnorm(100),
+#'          part_colors = c(dc = 'blue', ha = 1))
+#'
 #' @export
-
-plot_neat = function(data_per_subject,
-                     values,
+plot_neat = function(data_per_subject = NULL,
+                     values = NULL,
                      within_ids = NULL,
                      between_vars = NULL,
                      factor_names = NULL,
@@ -320,13 +372,28 @@ plot_neat = function(data_per_subject,
                      line_colors = c('#555555', '#000000'),
                      row_number = 1,
                      method = mean,
-                     eb_method = stats::sd) {
-    if (class(data_per_subject) == "character") {
-        data_wide = eval(parse(text = data_per_subject))
-        data_per_subject = data_wide
-    } else {
-        data_wide = data_per_subject
+                     eb_method = neatStats::mean_ci,
+                     numerics = FALSE,
+                     hush = FALSE,
+                     parts = c('h', 'd', 'n', 'b'),
+                     part_colors = NULL,
+                     binwidth = NULL) {
+    if (is.null(values) &&
+        is.atomic(data_per_subject)) {
+        values = data_per_subject
+        data_per_subject = NULL
     }
+    if (is.null(data_per_subject)) {
+        return(
+            neat_plot2(
+                values = values,
+                parts = parts,
+                part_colors = part_colors,
+                binwidth = binwidth
+            )
+        )
+    }
+    data_wide = data_per_subject
     validate_args(
         match.call(),
         list(
@@ -342,12 +409,20 @@ plot_neat = function(data_per_subject,
             val_arg(type, c('char'), 1, c('bar', 'line')),
             val_arg(dodge, c('null', 'num')),
             val_arg(bar_colors, c('char'), 0),
-            val_arg(line_colors, c('char'), 0),
+            val_arg(line_colors, c('char')),
             val_arg(row_number, c('num'), 1),
             val_arg(method, c('function'), 1),
-            val_arg(eb_method, c('null', 'function'), 1)
+            val_arg(eb_method, c('null', 'function'), 1),
+            val_arg(numerics, c('bool', 'char'), 1),
+            val_arg(hush, c('bool'), 1)
         )
     )
+    str_meth = utils::tail(strsplit(paste(deparse(substitute(
+        method
+    )), collapse = ""), '::', fixed = TRUE)[[1]], n = 1)
+    str_ebmeth = utils::tail(strsplit(paste(deparse(
+        substitute(eb_method)
+    ), collapse = ""), '::', fixed = TRUE)[[1]], n = 1)
 
     cols_notfound = c()
     if (!is.null(between_vars)) {
@@ -379,8 +454,27 @@ plot_neat = function(data_per_subject,
             )
         }
     }
-    val_wi_id(match.call(), within_ids, values)
-    name_taken('within_factor', data_wide)
+    val_levels = val_wi_id(match.call(), within_ids, values)
+    # collapsing
+    fac_dups = unique(val_levels[duplicated(val_levels)])
+    if (length(fac_dups) > 0) {
+        message('Columns with identical factors were found!',
+                ' Make sure this is how you want it:')
+        for (dup in fac_dups) {
+            to_collapse = names(val_levels)[val_levels == dup]
+            message(
+                'The columns "',
+                paste(to_collapse, collapse = '", "'),
+                '" were collapsed into one column',
+                ' (using their mean value per observation).'
+            )
+            data_wide[[dup]] = rowMeans(data_wide[, to_collapse], na.rm =
+                                               TRUE)
+            values = values[!(values %in% to_collapse)]
+            values = c(values, dup)
+        }
+    }
+    # end collapsing
     name_taken('neat_unique_values', data_wide)
     name_taken('neat_unique_id', data_wide)
     id_col = 'neat_unique_id'
@@ -399,12 +493,15 @@ plot_neat = function(data_per_subject,
             for (fact_name in names(within_ids)) {
                 data_reshaped[[fact_name]] = fact_name
                 for (fact_x in within_ids[[fact_name]]) {
-                    data_reshaped[[fact_name]][grepl(fact_x, data_reshaped$within_factor)] = fact_x
+                    data_reshaped[[fact_name]][grepl(fact_x, data_reshaped$within_factor, fixed = TRUE)] = fact_x
                 }
                 data_reshaped[[fact_name]] = as.factor(data_reshaped[[fact_name]])
             }
             within_vars = paste(names(within_ids), collapse = ', ')
-        } else if (is.character(within_ids)) {
+        } else if (is.list(within_ids)) {
+            within_vars = names(within_ids)
+            names(data_reshaped)[names(data_reshaped) == 'within_factor'] = names(within_ids)
+        }  else if (is.character(within_ids)) {
             within_vars = within_ids
             names(data_reshaped)[names(data_reshaped) == 'within_factor'] = within_ids
         } else {
@@ -425,11 +522,7 @@ plot_neat = function(data_per_subject,
     } else {
         g_by = paste(within_vars, between_vars, sep = ',')
     }
-    if (length(to_c(g_by)) > 3) {
-        stop("Maximum three factors can be plotted. See help(plot_neat)")
-    } else if (length(to_c(g_by)) < 2) {
-        stop("Minimum two factors are needed for plotting. See help(plot_neat)")
-    }
+    onefact = FALSE
     to_plot = mains_ebs(
         data_long = this_data,
         method = method,
@@ -453,7 +546,7 @@ plot_neat = function(data_per_subject,
         panels %in% fact_names && length(fact_names) == 3) {
         fact_names = c(fact_names[!fact_names == panels], panels)
     }
-    if (reverse == TRUE) {
+    if (reverse == TRUE && onefact != TRUE) {
         fact_names[c(1, 2)] = fact_names[c(2, 1)]
     }
     if (!is.null(within_vars)) {
@@ -461,14 +554,30 @@ plot_neat = function(data_per_subject,
             for (fact_n in names(within_ids)) {
                 to_plot[[fact_n]] = factor(to_plot[[fact_n]], levels = within_ids[[fact_n]])
             }
+        } else if (is.list(within_ids)) {
+            to_plot[[names(within_ids)]] = factor(to_plot[[names(within_ids)]], levels = values)
         } else if (is.character(within_ids)) {
             to_plot[[within_ids]] = factor(to_plot[[within_ids]], levels = values)
         } else {
             to_plot[['within_factor']] = factor(to_plot[['within_factor']], levels = values)
         }
     }
+    tots = to_plot
+    names(tots)[names(tots) == 'x.main'] = str_meth
+    names(tots)[names(tots) == 'x.eb'] = str_ebmeth
+    if (numerics == TRUE) {
+        return(tots)
+    }
+    if (hush == FALSE) {
+        print(tots)
+    }
+    if (length(to_c(g_by)) > 3) {
+        message("Maximum three factors can be plotted. See help(plot_neat)")
+        return(NULL)
+    } else if (length(to_c(g_by)) < 2) {
+        onefact = TRUE
+    }
     p_close = fact_names[1]
-    p_mid = fact_names[2]
     if (is.null(dodge)) {
         if (type == 'bar') {
             dodge = 0.9
@@ -476,66 +585,292 @@ plot_neat = function(data_per_subject,
             dodge = 0.1
         }
     }
-    if (type == 'line') {
-        color_gen = grDevices::colorRampPalette(line_colors)
-        palcolors = color_gen(length(unique(to_plot[[p_close]])))
-        the_plot = ggplot2::ggplot(data = to_plot, aes(
-            x = to_plot[[p_mid]],
-            y = to_plot$x.main,
-            group = to_plot[[p_close]]
-        )) +
-            geom_line(aes(linetype = to_plot[[p_close]], color = to_plot[[p_close]]),
-                      position = position_dodge(dodge)) +
-            geom_point(aes(shape = to_plot[[p_close]], color = to_plot[[p_close]]),
-                       position = position_dodge(dodge))  +
-            scale_shape_discrete(name = re_n(p_close, factor_names)) +
-            scale_linetype_discrete(name = re_n(p_close, factor_names)) +
-            scale_color_manual(values = palcolors,
-                              name = re_n(p_close, factor_names))
-        if (!is.null(eb_method)) {
-            the_plot = the_plot + geom_errorbar(
-                aes(
-                    ymin = to_plot$x.main - to_plot$x.eb,
-                    ymax = to_plot$x.main + to_plot$x.eb,
-                    width = 0.2,
-                    color = to_plot[[p_close]]
-                ),
-                position = position_dodge(dodge)
-            )
+    if (onefact == TRUE) {
+        p_mid = fact_names[1]
+        if (type == 'line')  {
+            the_plot = ggplot2::ggplot(data = to_plot,
+                                       aes(
+                                           x = .data[[p_close]],
+                                           y = .data$x.main,
+                                           group = 1
+                                       )) +
+                geom_line(color = line_colors[1]) + geom_point(color = line_colors[1])
+        } else {
+            the_plot = ggplot2::ggplot(data = to_plot,
+                                       aes(
+                                           x = .data[[p_close]],
+                                           y = .data$x.main,
+                                           group = 1
+                                       )) +
+                geom_bar(stat = "identity",
+                         color = "black",
+                         fill = bar_colors[1])
         }
     } else {
-        color_gen = grDevices::colorRampPalette(bar_colors)
-        palcolors = color_gen(length(unique(to_plot[[p_close]])))
-        the_plot = ggplot2::ggplot(data = to_plot,
-                                   aes(
-                                       x = to_plot[[p_mid]],
-                                       y = to_plot$x.main,
-                                       fill = to_plot[[p_close]]
-                                   )) +
-            geom_bar(stat = "identity",
-                     position = position_dodge(dodge)) +
-            scale_fill_manual(values = palcolors,
-                              name = re_n(p_close, factor_names))
-        if (!is.null(eb_method)) {
+        p_mid = fact_names[2]
+        if (type == 'line') {
+            color_gen = grDevices::colorRampPalette(line_colors)
+            palcolors = color_gen(length(unique(to_plot[[p_close]])))
+            the_plot = ggplot2::ggplot(data = to_plot,
+                                       aes(
+                                           x = .data[[p_mid]],
+                                           y = .data$x.main,
+                                           group = .data[[p_close]]
+                                       )) +
+                geom_line(aes(linetype = .data[[p_close]], color = .data[[p_close]]),
+                          position = position_dodge(dodge)) +
+                geom_point(aes(shape = .data[[p_close]], color = .data[[p_close]]),
+                           position = position_dodge(dodge))  +
+                scale_shape_discrete(name = re_n(p_close, factor_names)) +
+                scale_linetype_discrete(name = re_n(p_close, factor_names)) +
+                scale_color_manual(values = palcolors,
+                                   name = re_n(p_close, factor_names))
+        } else {
+            color_gen = grDevices::colorRampPalette(bar_colors)
+            palcolors = color_gen(length(unique(to_plot[[p_close]])))
+            the_plot = ggplot2::ggplot(data = to_plot,
+                                       aes(
+                                           x = .data[[p_mid]],
+                                           y = .data$x.main,
+                                           fill = .data[[p_close]]
+                                       )) +
+                geom_bar(
+                    stat = "identity",
+                    color = "black",
+                    position = position_dodge(dodge)
+                ) +
+                scale_fill_manual(values = palcolors,
+                                  name = re_n(p_close, factor_names))
+        }
+    }
+    if (!is.null(eb_method)) {
+        if (type == 'line') {
+            if (onefact == TRUE) {
+                the_plot = the_plot + geom_errorbar(
+                    aes(
+                        ymin = .data$x.main - .data$x.eb,
+                        ymax = .data$x.main + .data$x.eb,
+                        width = 0.2
+                    ),
+                    color = line_colors[1],
+                    position = position_dodge(dodge)
+                )
+            } else {
+                the_plot = the_plot + geom_errorbar(
+                    aes(
+                        ymin = .data$x.main - .data$x.eb,
+                        ymax = .data$x.main + .data$x.eb,
+                        width = 0.2,
+                        color = .data[[p_close]]
+                    ),
+                    position = position_dodge(dodge)
+                )
+            }
+        } else {
             the_plot = the_plot + geom_errorbar(
                 aes(
-                    ymin = to_plot$x.main - to_plot$x.eb,
-                    ymax = to_plot$x.main + to_plot$x.eb,
+                    ymin = .data$x.main - .data$x.eb,
+                    ymax = .data$x.main + .data$x.eb,
                     width = 0.2
                 ),
                 position = position_dodge(dodge)
             )
         }
     }
-    if (length(fact_names) == 3) {
-        the_plot = the_plot + facet_wrap(~ to_plot[[fact_names[3]]], nrow = row_number)
-    }
     the_plot = the_plot + theme_bw() +
         labs(x = re_n(p_mid, factor_names), y = y_title) +
-        theme(panel.grid.major.x = element_blank()) +
         theme(
+            panel.grid.major.x = element_blank(),
             panel.grid.major.y = element_line(color = "#d5d5d5"),
             panel.grid.minor.y = element_line(color = "#d5d5d5")
         )
-    return(the_plot)
+    if (length(fact_names) == 3) {
+        the_plot = the_plot + facet_wrap(~ .data[[fact_names[3]]], nrow = row_number) +
+            theme(strip.background = element_blank(),
+                  strip.text = element_text(face = 'bold', size = 12))
+    }
+    if (numerics != FALSE) {
+        graphics::plot(the_plot)
+        invisible(tots)
+    } else {
+        return(the_plot)
+    }
+}
+
+
+neat_plot2 = function(values,
+                     binwidth = NULL,
+                     parts = c('h', 'b', 'n'),
+                     part_colors = NULL) {
+    # c('hc', 'ha', 'dc', 'da', 'nc', 'na', 'bc', 'ba')
+    validate_args(match.call(),
+                  list(
+                      val_arg(values, c('num'), 0),
+                      val_arg(parts, c('char')),
+                      val_arg(part_colors, c('null', 'num', 'char')),
+                      val_arg(binwidth, c('null', 'num'))
+                  ))
+    clrs = c(
+        hc = '#aaaadc',
+        ha = 0.4,
+        dc = '#004400',
+        da = 0.1,
+        nc = '#cc0000',
+        na = 1,
+        bc = '#bcdcc5',
+        ba = 1,
+        hlc = 'black'
+    )
+    wrongparts = parts[!(parts %in% c('h', 'd', 'b', 'n'))]
+    if (length(wrongparts) > 0) {
+        message(
+            'The following "parts" inputs are not correct: "',
+            paste(wrongparts, collapse = '", "'),
+            '". See ?plot_neat.'
+        )
+    }
+    wrongpartclrs = names(part_colors)[!(names(part_colors) %in% names(clrs))]
+    if (length(wrongpartclrs) > 0) {
+        message(
+            'The following "part_colors" inputs are not correct: "',
+            paste(wrongpartclrs, collapse = '", "'),
+            '". See ?plot_neat.'
+        )
+    }
+    if (!is.null(part_colors)) {
+        for (nm in names(part_colors)) {
+            clrs[nm] = part_colors[nm]
+        }
+    }
+    plot_data = data.frame(values = values)
+    if (is.null(binwidth)) {
+        max_binwidth = (max(values) - min(values)) / 10
+        my_binwidth = 2 * stats::IQR(values) / (length(values) ^ (1 / 3))
+        if (max_binwidth < my_binwidth) {
+            my_binwidth = max_binwidth
+        }
+    } else {
+        my_binwidth = binwidth
+    }
+    the_plot = ggplot(plot_data, aes(x = values))
+    if ('h' %in% parts) {
+        the_plot = the_plot + geom_histogram(
+            aes(y = .data$..count..),
+            alpha = as.numeric(clrs['ha']),
+            binwidth = my_binwidth,
+            color = clrs['hlc'],
+            fill = clrs['hc']
+        )
+        if ('d' %in% parts) {
+            the_plot = the_plot +
+                geom_density(
+                    aes(y = .data$..count.. * my_binwidth),
+                    color = clrs['dc'],
+                    alpha = as.numeric(clrs['da']),
+                    fill = clrs['dc']
+                )
+        }
+        if ('n' %in% parts) {
+            the_plot = the_plot +
+                stat_function(
+                    fun = function(x)
+                        stats::dnorm(
+                            x,
+                            mean = mean(values),
+                            sd = stats::sd(values)
+                        ) * length(values) * my_binwidth,
+                    color = clrs['nc'],
+                    alpha = as.numeric(clrs['na']),
+                    linetype = "dashed"
+                )
+        }
+    } else {
+        if ('d' %in% parts) {
+            the_plot = the_plot +
+                geom_density(
+                    color = clrs['dc'],
+                    alpha = as.numeric(clrs['da']),
+                    fill = clrs['dc']
+                )
+        }
+
+        if ('n' %in% parts) {
+            the_plot = the_plot +
+                stat_function(
+                    fun = function(x)
+                        stats::dnorm(
+                            x,
+                            mean = mean(values),
+                            sd = stats::sd(values)
+                        ),
+                    color = clrs['nc'],
+                    alpha = as.numeric(clrs['na']),
+                    linetype = "dashed"
+                )
+        }
+    }
+    if ('b' %in% parts) {
+        xrange = ggplot_build(the_plot)$layout$panel_params[[1]]$y.range
+        hght = xrange[2] - xrange[1]
+        box_y = -hght / 20
+        box_w = -box_y / 2.2
+        p_box <-
+            ggplot(plot_data, aes(y = values)) + geom_boxplot()
+        p_box_dat = layer_data(p_box)
+        the_plot = the_plot +
+            # manually plot flipped boxplot
+            geom_segment(data = p_box_dat, aes(
+                x = .data$ymin,
+                xend = .data$ymax,
+                y = box_y,
+                yend = box_y
+            )) +
+            geom_rect(
+                data = p_box_dat,
+                aes(
+                    x = NULL,
+                    xmin = .data$lower,
+                    xmax = .data$upper,
+                    ymin = box_y - box_w,
+                    ymax = box_y + box_w
+                ),
+                color = "black",
+                fill = clrs['bc'],
+                alpha = as.numeric(clrs['ba'])
+            )  +
+            # vertical lines at Q1 / Q2 / Q3
+            geom_segment(data = p_box_dat,
+                         aes(
+                             x = .data$ymin ,
+                             y = box_y + box_w,
+                             yend = box_y - box_w,
+                             xend = .data$ymin
+                         )) +
+            geom_segment(
+                data = p_box_dat,
+                aes(
+                    x = .data$middle ,
+                    y = box_y + box_w,
+                    yend = box_y - box_w,
+                    xend = .data$middle
+                ),
+                size = 0.8
+            ) +
+            geom_segment(data = p_box_dat,
+                         aes(
+                             x = .data$ymax,
+                             y = box_y + box_w,
+                             yend = box_y - box_w,
+                             xend = .data$ymax
+                         ))
+        if (length(p_box_dat$outliers[[1]]) > 0) {
+            the_plot = the_plot + geom_point(
+                data = data.frame(x1 = p_box_dat$outliers[[1]]),
+                aes(x = .data$x1, y = box_y),
+                shape = 4
+            )
+
+        }
+    }
+    return(the_plot + theme_bw())
 }

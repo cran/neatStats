@@ -2,11 +2,11 @@
 % Please edit documentation in R/plot_neat.R
 \name{plot_neat}
 \alias{plot_neat}
-\title{Plots of factors}
+\title{Plots of Means and of Dispersion}
 \usage{
 plot_neat(
-  data_per_subject,
-  values,
+  data_per_subject = NULL,
+  values = NULL,
   within_ids = NULL,
   between_vars = NULL,
   factor_names = NULL,
@@ -20,18 +20,27 @@ plot_neat(
   line_colors = c("#555555", "#000000"),
   row_number = 1,
   method = mean,
-  eb_method = stats::sd
+  eb_method = neatStats::mean_ci,
+  numerics = FALSE,
+  hush = FALSE,
+  parts = c("h", "d", "n", "b"),
+  part_colors = NULL,
+  binwidth = NULL
 )
 }
 \arguments{
-\item{data_per_subject}{Data frame or name of data frame as string. Should
-contain all values (measurements/observations) in a single row per each
-subject.}
+\item{data_per_subject}{Data frame containing all values
+(measurements/observations for a factorial design) in a single row per each
+subject. Otherwise, if no data frame is given (default: \code{NULL}),
+histogram, density, or box plots will be returned for a continuous variable
+(numeric vector).}
 
-\item{values}{Vector of strings; column name(s) in the \code{data_per_subject}
-data frame. Each column should contain a single dependent variable: thus, to
-plot repeated (within-subject) measurements, each specified column should
-contain one measurement.}
+\item{values}{For plots of means (factorial designs): vector of strings;
+column name(s) in the \code{data_per_subject} data frame. Each column should
+contain a single dependent variable: thus, to plot repeated (within-subject)
+measurements, each specified column should contain one measurement. For
+descriptive dispersion plots (if \code{data_per_subject} is \code{NULL}), a
+numeric vector is expected.}
 
 \item{within_ids}{\code{NULL} (default), string, or named list. In case of no
 within-subject factors, leave as \code{NULL}. In case of a single within
@@ -97,12 +106,14 @@ plots, and \code{0.9} for \code{bar} plots.)}
 for any number of differing adjacent bars are interpolated. (If the number
 of given colors equal the number of different bars, the precise colors will
 correspond to each bar.) The default \code{c('#333333', '#AAAAAA')} gives a
-color gradient from dark gray to light gray.}
+color gradient from dark gray to light gray. (In case of a single factor,
+the first given colors is taken.)}
 
 \item{line_colors}{Vector of strings, specifying colors from which all colors
 for any number of differing vertically aligned dots and corresponding lines
 are interpolated. The default \code{c('#555555', '#000000')} gives a color
-gradient from dark gray to black.}
+gradient from dark gray to black. (In case of a single factor, the first
+given colors is taken.)}
 
 \item{row_number}{Number. In case of multiple panels, the number of rows in
 which the panels should be arranged. For example, with the default
@@ -112,27 +123,62 @@ aligned row.}
 \item{method}{A function (default: \code{mean}) for the calculation of the
 main statistics (bar or dot heights).}
 
-\item{eb_method}{A function (default: \code{sd}) for the calculation of the
-error bar size (as a single value used for both directions of the error
-bar). If set to \code{NULL}, no error bar is displayed.}
+\item{eb_method}{A function (default: \code{\link{mean_ci}} for 95% CI) for
+the calculation of the error bar size (as a single value used for both
+directions of the error bar). If set to \code{NULL}, no error bar is
+displayed.#'}
+
+\item{numerics}{If \code{FALSE} (default), returns
+\code{\link[ggplot2]{ggplot}} object. If set to \code{TRUE}, returns only
+the numeric aggregated data per grouping factors, as specified by
+\code{method} and \code{eb_method} functions. If set to any string (e.g.
+\code{"both"}), returns the numeric aggregated data and at the same time
+\code{\link[graphics:plot]{draws}} the plot.}
+
+\item{hush}{Logical. If \code{TRUE}, prevents printing aggregated values.}
+
+\item{parts}{For dispersion plots only (if no \code{data_per_subject} is
+given). A vector of characters that specify which types of overlayed types
+to plot: \code{"h"} for histogram, \code{"d"} for density, \code{"n"}
+normally distributed density (using the mean and standard deviation of the
+given variable), \code{"b"} for boxplot. (All are included by default:
+\code{parts = c("h", "d", "n", "b")}).}
+
+\item{part_colors}{For dispersion plots only (if no \code{data_per_subject} is
+given). A named that can specify and thereby override default colors and
+alpha (transparency) of each plot type. Colors can be given by adding "c" to
+the plot type letter, e.g. \code{c(hc = "blue")} for blue histogram. Alpha
+can be given by adding "a" to the plot type letter, e.g. \code{c(ha = 0)}
+for completely transparent histogram. Any number may be given: e.g. a dark
+red transparent histogram with green boxplot would be \code{part_colors =
+c(hc = "#cc0000", ha = 0.1, bc = "green")}.}
+
+\item{binwidth}{For dispersion plots only (if no \code{data_per_subject} is
+given). Binwidth for histograms. If \code{NULL} (default), Freedman–Diaconis
+rule is used if it produces at least 10 bins – otherwise 1bandwidth is
+calculated for 10 bins.}
 }
 \value{
-A \code{\link[ggplot2]{ggplot}} plot object. (This object may be
- further modified or adjusted via regular \code{\link[ggplot2]{ggplot}}
- methods.)
+By default, a \code{\link[ggplot2]{ggplot}} plot object. (This object
+ may be further modified or adjusted via regular
+ \code{\link[ggplot2]{ggplot}} methods.) If so set (\code{numerics}),
+ aggregated values as specified by the methods.
 }
 \description{
-Bar and line \code{\link[ggplot2:ggplot]{plots}} for factorial
- designs.
+Primarily for line and bar \code{\link[ggplot2:ggplot]{plots}}
+ for factorial designs. Otherwise (if no \code{data_per_subject} is given)
+ descriptive dispersion plots (histogram, density, or box plots) for a
+ continuous variable. (For the latter, only the parameters \code{values},
+ \code{parts}, \code{part_colors}, and \code{binwidth} are used, the rest are
+ ignored.)
 }
 \note{
-The number of factors (within and between together) must be either two
-  or three. Plot for a single factor would make little sense, while more than
-  three is difficult to clearly depict in a simple plot. (In the latter case,
-  you probably want to build an appropriate graph using
-  \code{\link[ggplot2]{ggplot}} directly; but you can also just divide the
-  data to produce several three-factor plots, after which you can use e.g.
-  \code{ggpubr}'s \code{ggarrange} to easily collate the plots.)
+More than three factors is not allowed: it would make little sense and
+  it would be difficult to clearly depict in a simple figure. (However, you
+  can build an appropriate graph using \code{\link[ggplot2]{ggplot}}
+  directly; but you can also just divide the data to produce several
+  three-factor plots, after which you can use e.g. \code{ggpubr}'s
+  \code{ggarrange} to easily collate the plots.)
 }
 \examples{
 
@@ -330,7 +376,7 @@ pic_ratings = data.frame(
 
 # now include the 'group_id' factor in the plot
 plot_neat(
-    'pic_ratings',
+    pic_ratings,
     values = c(
         'rating_fright_low_disgust_low',
         'rating_fright_high_disgust_low',
@@ -344,6 +390,24 @@ plot_neat(
     between_vars = 'group_id'
 )
 }
+
+## DISPERSION PLOTS
+
+plot_neat(values = rnorm(100))
+
+# with smaller binwidth (hence more bins)
+plot_neat(values = rnorm(100), binwidth = 0.2)
+
+# without normal distribution line
+plot_neat(values = rnorm(100), parts = c('h', 'd', 'b'))
+
+# without histrogram
+plot_neat(values = rnorm(100), parts = c('d', 'n', 'b'))
+
+# blue density, fully opaque histogram
+plot_neat(values = rnorm(100),
+         part_colors = c(dc = 'blue', ha = 1))
+
 }
 \seealso{
 \code{\link{anova_neat}}, \code{\link{mean_ci}}, \code{\link{se}}

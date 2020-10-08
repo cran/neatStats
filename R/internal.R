@@ -2,6 +2,7 @@
 pkg.globals = new.env()
 pkg.globals$my_unique_grouping_var = NULL
 pkg.globals$my_unique_method = NULL
+pkg.globals$my_unique_first_iter = NULL
 
 # the function below is to be added later
 # to_clipboard = function( printing_function ) {
@@ -79,7 +80,10 @@ bf_names = function(the_names) {
 show_auc = function(theroc,
                     ci = 0.95,
                     round_to = 3,
-                    for_table = FALSE) {
+                    for_table = FALSE,
+                    thres = NULL,
+                    best_tp = NULL,
+                    best_fp = NULL) {
     if (for_table == TRUE) {
         ci_disp = ""
     } else {
@@ -89,7 +93,31 @@ show_auc = function(theroc,
     auc_ci = as.numeric(pROC::ci.auc(theroc, conf.level = ci))
     lower = edges(auc_ci[1], round_to)
     upper = edges(auc_ci[3], round_to)
-    prnt("AUC = ", auc_num, ci_disp, " [", lower, ", ", upper, "]")
+    thres = ro(thres, round_to)
+    best_tp = edges(best_tp, round_to)
+    best_fp = edges(best_fp, round_to)
+    if (thres == Inf | thres == -Inf) {
+      rates_optim = " (below chance level)"
+    } else {
+      rates_optim = paste0(" (TPR = ",
+                           best_tp,
+                           ", TNR = ",
+                           best_fp,
+                           ", with the optimal cutoff ",
+                           thres,
+                           ")")
+    }
+    prnt(
+      "AUC = ",
+      auc_num,
+      ci_disp,
+      " [",
+      lower,
+      ", ",
+      upper,
+      "]",
+      rates_optim
+    )
 }
 
 edges = function(the_num, round_to, no_null = FALSE) {
@@ -167,17 +195,19 @@ to_c = function(var) {
     return(strsplit(var, ",")[[1]])
 }
 
-merge_cols = function(dat_aggred) {
+merge_cols = function(dat_aggred, sep) {
     g_names = names(dat_aggred)[startsWith(names(dat_aggred), 'Group.')]
     if (length(g_names) > 1) {
         dat_aggred = eval(parse(
-            text = paste0(
-                "within(dat_aggred, g_merged <-
+          text = paste0(
+            "within(dat_aggred, g_merged <-
                 paste(",
-                paste(g_names, collapse = ','),
-                ", sep = '_'))"
-                )
-            ))
+            paste(g_names, collapse = ','),
+            ", sep = '",
+            sep,
+            "'))"
+          )
+        ))
         dat_aggred[, 1] = dat_aggred$g_merged
         colnames(dat_aggred)[1] <- "aggr_group"
         dat_aggred = dat_aggred[, setdiff(names(dat_aggred), c('g_merged', g_names))]
@@ -186,6 +216,33 @@ merge_cols = function(dat_aggred) {
     }
     return(dat_aggred)
 }
+
+checkcol = function(df_names, thecols) {
+    cols_notfound = c()
+    for (colname in thecols) {
+        if (!colname %in% df_names) {
+            cols_notfound = c(cols_notfound, colname)
+        }
+    }
+    if (length(cols_notfound) > 0) {
+        if (length(cols_notfound) ==  1) {
+            stop(
+                'The column "',
+                cols_notfound,
+                '" was not found in the data frame. Perhaps check for spelling mistakes.'
+            )
+        } else {
+            stop(
+                'The following columns were not found in the data frame: "',
+                paste(cols_notfound,
+                      collapse = '", "'),
+                '". Perhaps check for spelling mistakes.'
+            )
+        }
+    }
+}
+
+
 
 transp = function(to_transpose, headers) {
     if (headers == TRUE) {
@@ -199,6 +256,60 @@ transp = function(to_transpose, headers) {
     tdat = as.data.frame(t(to_transpose[, -1]))
     colnames(tdat) = hnames
     return(tdat)
+}
+
+
+get_row = function(..., nameless = FALSE) {
+    dotdot = c(as.list(environment()), list(...))
+    dotdot$nameless = NULL
+    newrow = data.frame(row.names = 1)
+    for (itnum in seq_along(dotdot)) {
+        itname = names(dotdot)[itnum]
+        addee = dotdot[[itnum]]
+        if (itname != "" & is.atomic(addee) & length(addee) == 1) {
+            newrow[itname] = addee
+        } else {
+            if (is.atomic(addee) | inherits(addee, "list")) {
+                if (nameless == FALSE &
+                    length(names(addee)[(names(addee) != "")]) != length(addee)) {
+                    print(addee)
+                    stop("Missing vector names!\n",
+                        'Each addition (... argument) must be one of the following: ',
+                        'a data frame (either single row or two column); ',
+                        'a list or a vector with single elements; ',
+                        'or a single value with parameter name ',
+                        '(e.g. date = 1989 or id = "jdoe").'
+                    )
+                }
+                addee = as.list(addee)
+            } else if (inherits(addee, "data.frame")) {
+                if (nrow(addee) == 0) {
+                    print(addee)
+                    stop('Data frame should not be empty.')
+                } else if (nrow(addee) > 1) {
+                    if (ncol(addee) == 2) {
+                        hnames = as.character(addee[, 1])
+                        addee = as.data.frame(t(as.vector(addee[, 2])))
+                        colnames(addee) = hnames
+                    } else {
+                        print(names(addee))
+                        stop('Data frame with multiple rows must have two columns.')
+                    }
+                }
+            } else {
+                print(addee)
+                stop(
+                    'Each addition (... argument) must be one of the following: ',
+                    'a data frame (either single row or two column); ',
+                    'a list or a vector with single elements; ',
+                    'or a single value with parameter name ',
+                    '(e.g. date = 1989 or id = "jdoe").'
+                )
+            }
+            newrow = data.frame(newrow, addee)
+        }
+    }
+    return(newrow)
 }
 
 mains_ebs = function(data_long, method, eb_method, g_by) {
@@ -302,7 +413,9 @@ val_arg = function(arg_val,
         && (!('data.frame' %in% req_types &&
               is.data.frame(arg_val)))
         && (!('function' %in% req_types &&
-              is.function(arg_val))) &&
+              is.function(arg_val)))
+        && (!('double' %in% req_types &&
+              is.integer(arg_val))) &&
         (!('list' %in% req_types &&
            is.list(arg_val)))) {
         failed = TRUE
@@ -360,91 +473,92 @@ val_arg = function(arg_val,
 }
 
 val_wi_id = function(func_used, id_arg, val_cols) {
-    if (is.list(id_arg)) {
-        arg_name = paste(deparse(substitute(arg_val)), collapse = "")
-        func_used = gsub("\\s+", " ", paste(deparse(func_used), collapse = " "))
-        if (length(id_arg) < 2) {
-            feedback = paste0(
-                '\nIf list is given as argument for "',
-                arg_name,
-                '", it must contain at least two elements.'
-            )
-        } else {
-            feedback = ''
-            vals_num = length(val_cols)
-            w_facts_num = length(id_arg)
-            if (2 ** w_facts_num > vals_num) {
-                feedback = paste0(
-                    '\nYou specified ',
-                    w_facts_num,
-                    ' within-subject factors in "',
-                    arg_name,
-                    '". This means there must be at least ',
-                    2 ** w_facts_num,
-                    ' values columns specified, but you only specified ',
-                    vals_num,
-                    '.'
-                )
-            }
-            for (val_name in val_cols) {
-                for (fact_name in names(id_arg)) {
-                    fact_ids = id_arg[fact_name][[1]]
-                    if (length(fact_ids) <= 1) {
-                        feedback = paste0(
-                            feedback,
-                            '\nAll within-subject factors must have at least two levels. (Check "',
-                            fact_name,
-                            '").'
-                        )
-                    } else {
-                        id_count = 0
-                        for (f_id in fact_ids) {
-                            if (grepl(f_id, val_name, fixed = TRUE)) {
-                                id_count = id_count + 1
-                            }
-                        }
-                        if (id_count == 0) {
-                            feedback = paste0(
-                                feedback,
-                                '\nNo matching level found for "',
-                                val_name,
-                                '" for factor "',
-                                fact_name,
-                                '".'
-                            )
-                        } else if (id_count > 1) {
-                            feedback = paste0(
-                                feedback,
-                                '\nMore than one matching level found for "',
-                                val_name,
-                                '" for factor "',
-                                fact_name,
-                                '". (This means that the specified factor name text is ambiguous,',
-                                ' see "within_ids" in documentation e.g. by entering ?anova_neat.',
-                                ' Try different naming for level specification, ',
-                                'or change column names.)'
-                            )
-                        }
-
-                    }
-                }
-            }
-        }
-        if (feedback != '') {
-            feedback = paste0(
-                "Arguments are not correct in the '",
-                func_used,
-                "' function:",
-                feedback,
-                '\n... Hint: enter help(',
-                gsub('"', '', strsplit(func_used, "\\(")[[1]][1]),
-                ') for detailed function info.'
-            )
-            stop(feedback, call. = FALSE)
-        }
+  feedback = ''
+  dups = unique(val_cols[duplicated(val_cols)])
+  if (length(dups) > 0) {
+    feedback = paste0(
+      feedback,
+      '\nYou have duplicate column names for "values": ',
+      paste0(dups, collapse = ", "),
+      '.'
+    )
+  }
+  val_levels = c()
+  func_used = gsub("\\s+", " ", paste(deparse(func_used), collapse = " "))
+  if (is.list(id_arg)) {
+    vals_num = length(val_cols)
+    w_facts_num = length(id_arg)
+    if (2 ** w_facts_num > vals_num) {
+      feedback = paste0(
+        feedback,
+        '\nYou specified ',
+        w_facts_num,
+        ' within-subject factors for "within_ids". This means there must be at least ',
+        2 ** w_facts_num,
+        ' values columns specified, but you only specified ',
+        vals_num,
+        '.'
+      )
     }
+    for (val_name in val_cols) {
+      val_levels[val_name] = ''
+      for (fact_name in names(id_arg)) {
+        fact_ids = id_arg[[fact_name]]
+        if (length(fact_ids) <= 1) {
+          feedback = paste0(
+            feedback,
+            '\nAll within-subject factors must have at least two levels. (Check "',
+            fact_name,
+            '").'
+          )
+        } else {
+          id_count = 0
+          for (f_id in fact_ids) {
+            if (grepl(f_id, val_name, fixed = TRUE)) {
+              id_count = id_count + 1
+              val_levels[val_name] = paste0(val_levels[val_name], f_id)
+            }
+          }
+          if (id_count == 0) {
+            feedback = paste0(
+              feedback,
+              '\nNo matching level found for "',
+              val_name,
+              '" for factor "',
+              fact_name,
+              '".'
+            )
+          } else if (id_count > 1) {
+            feedback = paste0(
+              feedback,
+              '\nMore than one matching level found for "',
+              val_name,
+              '" for factor "',
+              fact_name,
+              '". (This means that the specified factor name text is ambiguous,',
+              ' see "within_ids" in documentation e.g. by entering ?anova_neat.',
+              ' Try different naming for level specification, ',
+              'or change column names.)'
+            )
+          }
+        }
+      }
+    }
+  }
+  if (feedback != '') {
+    feedback = paste0(
+      "Arguments are not correct in the '",
+      func_used,
+      "' function:",
+      feedback,
+      '\n... Hint: enter help(',
+      gsub('"', '', strsplit(func_used, "\\(")[[1]][1]),
+      ') for detailed function info.'
+    )
+    stop(feedback, call. = FALSE)
+  }
+  return(val_levels)
 }
-
 
 
 ## all below: rank BF functions from J. van Doorn

@@ -5,7 +5,7 @@
 #' @param dat Data frame (or name of data frame as string).
 #' @param values The vector of numbers from which the statistics are to be
 #'   calculated, or the name of the column in the \code{dat} data frame, that
-#'   contains the vector. (Expression or string are both accepted.)
+#'   contains the vector.
 #' @param method Function of string. If function, uses the \code{values} to
 #'   calculate the returned value for the given function (e.g. means, as per
 #'   default, using the \code{mean} function). Such a function may return a
@@ -34,6 +34,8 @@
 #' @param filt An expression to filter, by column values, the entire \code{dat}
 #'   data frame before performing the aggregation. The expression should use
 #'   column names alone; see Examples.
+#' @param sep String (underscore \code{"_"} by default) for separating group
+#'   names (and prefix, if given).
 #' @param prefix \code{NULL} (default) or string. String specifies a prefix for
 #'   each group type under the \code{group} column.
 #' @param new_name \code{NULL} (default) or string. String specifies new name
@@ -148,6 +150,7 @@ aggr_neat = function(dat,
                      method = mean,
                      group_by = NULL,
                      filt = NULL,
+                     sep = "_",
                      prefix = NULL,
                      new_name = NULL,
                      round_to = 2) {
@@ -176,12 +179,23 @@ aggr_neat = function(dat,
     }
     filt = paste(deparse(substitute(filt)), collapse = "")
     if (filt != "NULL") {
-        filt = trimws(filt, whitespace = "['\"]")
-        dat = eval(parse(text = paste0(
-            'with(data = dat, dat[',
-            filt,
-            ',])'
-        )))
+        if (startsWith(filt, "'") | startsWith(filt, '"')) {
+            stop('The argument "filt" must be an expression (not string).')
+        }
+        filt_vec = eval(parse(text = paste0('with(data = dat, ',
+                                            filt,
+                                            ')')))
+        na_sum = sum(is.na(filt_vec))
+        if (na_sum > 0) {
+            message(
+                'Note: ',
+                na_sum,
+                ' NA values were replaced as FALSE for filtering.',
+                ' You may want to double-check your filtering expression.'
+            )
+            filt_vec[is.na(filt_vec)] = FALSE
+        }
+        dat = dat[filt_vec,]
     }
     if (!is.null(pkg.globals$my_unique_method)) {
         method = pkg.globals$my_unique_method
@@ -242,10 +256,10 @@ aggr_neat = function(dat,
             }
         )
     }
-    aggred = merge_cols(aggred)
+    aggred = merge_cols(aggred, sep)
     colnames(aggred)[colnames(aggred) == 'x'] <- val_name
     if (is.null(prefix) != TRUE) {
-        aggred$aggr_group = paste(prefix, aggred$aggr_group, sep = "_")
+        aggred$aggr_group = paste(prefix, aggred$aggr_group, sep = sep)
     }
     return(aggred)
 }
