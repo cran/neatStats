@@ -24,17 +24,16 @@
 #'  is accepted (as a single string or a character vector; case-insensitive):
 #'  \code{"W"} (Shapiro-Wilk), \code{"K2"} (D'Agostino-Pearson), \code{"A2"}
 #'  (Anderson-Darling), \code{"JB"} (Jarque-Bera); see Notes. Two other options
-#'  are \code{"all"} (to choose all four previous tests at the same time) or
-#'  \code{"latent"} (default value; prints all tests only if
+#'  are \code{"all"} ((same as \code{TRUE}; to choose all four previous tests at
+#'  the same time) or \code{"latent"} (default value; prints all tests only if
 #'  \code{nonparametric} is set to \code{FALSE} and any of the four tests gives
 #'  a p value below .05). Each normality test is performed for the difference
 #'  values between the two variables in case of paired samples, or for each of
 #'  the two variables for unpaired samples. Set to \code{"none"} to disable
 #'  (i.e., not to perform any normality tests).
-#'@param norm_plots If \code{TRUE} and \code{norm_tests} is not \code{"none"},
-#'  displays density, histogram, and Q-Q plots (and scatter plots for paired
-#'  tests) for each of the two variable (and differences for pairwise
-#'  observations, in case of paired samples).
+#'@param norm_plots If \code{TRUE}, displays density, histogram, and Q-Q plots
+#'  (and scatter plots for paired tests) for each of the two variable (and
+#'  differences for pairwise observations, in case of paired samples).
 #'@param ci Numeric; confidence level for returned CIs for Cohen's d and AUC.
 #'@param bf_added Logical. If \code{TRUE} (default), Bayes factor is calculated
 #'  and displayed.
@@ -44,17 +43,21 @@
 #'  by default). More samples (e.g. \code{10000}) take longer time but give more
 #'  stable BF.
 #'@param auc_added Logical (\code{FALSE} by default). If \code{TRUE}, AUC is
-#'  calculated and displayed (including TPR and TNR, i.e., true positive and
-#'  true negative rates, i.e. sensitivity and specificity, using an optimal
-#'  cutoff value, i.e. threshold, that provides maximal TPR and TNR).
+#'  calculated and displayed. Includes TPR and TNR, i.e., true positive and true
+#'  negative rates, i.e. sensitivity and specificity, using an optimal cutoff
+#'  value, i.e. threshold, that provides maximal TPR and TNR. These values may
+#'  be cross-validated: see \code{cv_rep}. (Note that what is designated as
+#'  "positive" or "negative" depends on the scenario: this function always
+#'  assumes \code{var1} as positive and \code{var2} as negative. If your
+#'  scenario or preference differs, you can simply switch the names or values
+#'  when reporting the results.)
 #'@param r_added Logical. If \code{TRUE} (default), Pearson correlation is
 #'  calculated and displayed in case of paired comparison.
 #'@param for_table Logical. If \code{TRUE}, omits the confidence level display
 #'  from the printed text.
-#'@param test_title String, "Descriptives:" by default. Simply displayed in
-#'  printing preceding the descriptive statistics. (Useful e.g. to distinguish
-#'  several different comparisons inside a \code{function} or a \code{for}
-#'  loop.)
+#'@param test_title \code{NULL} or string. If not \code{NULL}, simply displayed
+#'  in printing preceding the statistics. (Useful e.g. to distinguish several
+#'  different comparisons inside a \code{function} or a \code{for} loop.)
 #'@param round_descr Number \code{\link[=ro]{to round}} to the descriptive
 #'  statistics (means and SDs).
 #'@param round_auc Number \code{\link[=ro]{to round}} to the AUC and its CI.
@@ -63,6 +66,17 @@
 #'  \code{var1} expected to be greater for 'cases' than \code{var2} mean) or "2"
 #'  (\code{var2} expected to be greater for 'cases' than \code{var1}). Not to be
 #'  confused with one-sided tests; see Details.
+#'@param cv_rep \code{FALSE} (default), \code{TRUE}, or numeric. If \code{TRUE}
+#'  or numeric, a cross-validation is performed for the calculation of TPRs and
+#'  TNRs. Numeric value specifies the number of repetitions, while, if
+#'  \code{TRUE}, it defaults to \code{100} repetitions. In each repetition, the
+#'  data is divided into \code{k} random parts ("folds"; see \code{cv_fold}),
+#'  and the optimal accuracy is obtained k times from a k-1 training set
+#'  (\code{var1} and \code{var2} truncated to equal length, if needed, in each
+#'  case within each repetition), and the TPR and TNR are calculated from the
+#'  remaining test set (different each time).
+#'@param cv_fold Numeric. The number of folds into which the data is divided for
+#'  cross-validation (default: 10).
 #'@param hush Logical. If \code{TRUE}, prevents printing any details to console.
 #'@param plots Logical (or \code{NULL}). If \code{TRUE}, creates a combined
 #'  density plot (i.e., \code{\link[stats:density]{Gaussian kernel density
@@ -133,14 +147,16 @@
 #'  (overall accuracy using the most optimal classification threshold), and
 #'  \code{youden} (Youden's index: \code{specificity + sensitivity - 1}). The
 #'  latter three are \code{NULL} when \code{auc_added} is \code{FALSE}. When
-#'  \code{auc_added} is \code{TRUE}, there are also two additional elements of
-#'  the list. One is '\code{roc_obj}', which is a \code{\link[pROC]{roc}}
-#'  object, to be used e.g. with the \code{\link{roc_neat}} function. The other
-#'  is '\code{best_thresholds}', which contains the best threshold value(s) for
-#'  classification, along with corresponding specificity and sensitivity.
-#'  Finally, if \code{plots} is \code{TRUE} (or \code{NULL}), the plot is
-#'  displayed as well as returned as a \code{\link[ggplot2]{ggplot}} object,
-#'  named \code{t_plot}.
+#'  \code{auc_added} is \code{TRUE}, there are also two or three additional
+#'  elements of the list. One is '\code{roc_obj}', which is a
+#'  \code{\link[pROC]{roc}} object, to be used e.g. with the
+#'  \code{\link{roc_neat}} function. Another is '\code{best_thresholds}', which
+#'  contains the best threshold value(s) for classification, along with
+#'  corresponding specificity and sensitivity. The third '\code{cv_results}'
+#'  contains the results, if any, of the cross-validation of TPRs and TNRs
+#'  (means per repetition). Finally, if \code{plots} is \code{TRUE} (or
+#'  \code{NULL}), the plot is displayed as well as returned as a
+#'  \code{\link[ggplot2]{ggplot}} object, named \code{t_plot}.
 #'
 #'@note
 #'
@@ -240,10 +256,12 @@ t_neat = function(var1,
                   auc_added = FALSE,
                   r_added = TRUE,
                   for_table = FALSE,
-                  test_title = "Descriptives:",
+                  test_title = NULL,
                   round_descr = 2,
                   round_auc = 3,
                   auc_greater = '1',
+                  cv_rep = FALSE,
+                  cv_fold = 10,
                   hush = FALSE,
                   plots = FALSE,
                   rug_size = 4,
@@ -261,7 +279,7 @@ t_neat = function(var1,
             val_arg(pair, c('bool'), 1),
             val_arg(nonparametric, c('bool'), 1),
             val_arg(greater, c('null', 'char'), 1, c('1', '2')),
-            val_arg(norm_tests, c('char')),
+            val_arg(norm_tests, c('bool', 'char')),
             val_arg(norm_plots, c('bool'), 1),
             val_arg(ci, c('null', 'num'), 1),
             val_arg(bf_added, c('bool'), 1),
@@ -270,9 +288,11 @@ t_neat = function(var1,
             val_arg(auc_added, c('bool'), 1),
             val_arg(r_added, c('bool'), 1),
             val_arg(for_table, c('bool'), 1),
-            val_arg(test_title, c('char'), 1),
+            val_arg(test_title, c('char', 'null'), 1),
             val_arg(round_descr, c('num'), 1),
             val_arg(round_auc, c('num'), 1),
+            val_arg(cv_rep, c('num', 'bool'), 1),
+            val_arg(cv_fold, c('num'), 1),
             val_arg(auc_greater, c('char'), 1, c('1', '2')),
             val_arg(hush, c('bool'), 1),
             val_arg(plots, c('bool', 'null'), 1),
@@ -311,8 +331,15 @@ t_neat = function(var1,
             message("NA values omitted.")
         }
     }
-    if (norm_tests != 'none' &
+    if (norm_plots == TRUE &
+        (norm_tests == 'none' | norm_tests == FALSE)) {
+        norm_tests = 'all'
+    }
+    if (norm_tests != 'none' & norm_tests != FALSE &
         hush == FALSE) {
+        if (norm_tests == TRUE) {
+            norm_tests = 'all'
+        }
         norm_tests_in(
             var1 = var1,
             var2 = var2,
@@ -544,43 +571,50 @@ t_neat = function(var1,
                               df,
                               ") = ")
         }
+        if (!is.null(test_title) && hush == FALSE) {
+            cat(test_title, fill = TRUE)
+        }
         prnt(
-            test_title,
-            " MCHAR_PLUSMINSD = ",
-            descr_1,
-            " vs. ",
-            descr_2,
-            " (raw mean difference: ",
+            "Mean difference (var1CHAR_MINUSvar2): ",
             mean_dif,
             ci_disp,
             " [",
             ci_r_low,
             ", ",
             ci_r_upp,
-            "])"
+            "] ",
+            "(MCHAR_PLUSMINSD = ",
+            descr_1,
+            " vs. ",
+            descr_2,
+            "), ",
+            paste0(
+                outbegin,
+                ro(t, 2),
+                ", p = ",
+                ro(pvalue, 3),
+                ", ",
+                d,
+                ci_disp,
+                " [",
+                lower,
+                ", ",
+                upper,
+                "]",
+                bf_out
+            )
         )
-        out = paste0(
-            outbegin,
-            ro(t, 2),
-            ", p = ",
-            ro(pvalue, 3),
-            ", ",
-            d,
-            ci_disp,
-            " [",
-            lower,
-            ", ",
-            upper,
-            "]",
-            bf_out
-        )
-        prnt(out)
     }
+    cv_cdrs = NULL
     if (auc_added == TRUE) {
         if (auc_greater == "2") {
             auc_dir = ">" # v2 expected larger
+            v_large = var2
+            v_small = var1
         } else {
             auc_dir = "<" # v1 expected larger
+            v_large = var1
+            v_small = var2
         }
         the_roc = pROC::roc(
             response = c(rep(0, length(var2)), rep(1, length(var1))),
@@ -601,17 +635,38 @@ t_neat = function(var1,
             max_acc = as.numeric(bestacc[1])
         }
         best_coords = pROC::coords(the_roc, x = "best")
-        the_auc = pROC::auc(the_roc)
         if (class(best_coords) == "data.frame") {
             plot_thres = as.numeric(best_coords$threshold)[1]
             best_tp = as.numeric(best_coords$sensitivity)[1]
-            best_fp = as.numeric(best_coords$specificity)[1]
+            best_tn = as.numeric(best_coords$specificity)[1]
         } else {
             plot_thres = as.numeric(best_coords["threshold"])[1]
             best_tp = as.numeric(best_coords["sensitivity"])[1]
-            best_fp = as.numeric(best_coords["specificity"])[1]
+            best_tn = as.numeric(best_coords["specificity"])[1]
         }
+        if (cv_rep != FALSE) {
+            if (cv_rep == TRUE) {
+                cv_rep = 100
+            }
+            cv_cdrs = docv_auc(v_large,
+                               v_small,
+                               cv_rep,
+                               cv_fold)
+        }
+        the_auc = pROC::auc(the_roc)
         if (hush == FALSE) {
+            if (is.null(cv_cdrs)) {
+                sd_tp = NULL
+                sd_tn = NULL
+                sd_th = NULL
+            } else {
+                sd_tp = paste0('CHAR_PLUSMIN', edges(stats::sd(cv_cdrs$TPRs), round_auc))
+                sd_tn = paste0('CHAR_PLUSMIN', edges(stats::sd(cv_cdrs$TNRs), round_auc))
+                sd_th = paste0('CHAR_PLUSMIN', edges(stats::sd(cv_cdrs$thresholds), round_auc))
+                best_tp = mean(cv_cdrs$TPRs)
+                best_tn = mean(cv_cdrs$TNRs)
+                plot_thres = mean(cv_cdrs$thresholds)
+            }
             show_auc(
                 theroc = the_roc,
                 ci = ci,
@@ -619,7 +674,10 @@ t_neat = function(var1,
                 for_table = for_table,
                 thres = plot_thres,
                 best_tp = best_tp,
-                best_fp = best_fp
+                best_tn = best_tn,
+                sd_tp = sd_tp,
+                sd_tn = sd_tn,
+                sd_th = sd_th
             )
         }
         plot_thres = plot_thres[!plot_thres %in% c(-Inf, Inf)]
@@ -662,6 +720,7 @@ t_neat = function(var1,
         ),
         roc_obj = the_roc,
         best_thresholds = best_coords,
+        cv_results = cv_cdrs,
         t_plot = the_plot
     ))
 }
@@ -696,11 +755,11 @@ plot_dens = function(v1,
         freed2 = 2 * stats::IQR(v2) / (length(v2) ^ (1 / 3))
         my_binwidth = min(max_1, max_2, freed1, freed2)
         the_plot = ggplot(dens_dat,
-                        aes(
-                            x = .data$vals,
-                            fill = .data$facts,
-                            color = .data$facts
-                        )) +
+                          aes(
+                              x = .data$vals,
+                              fill = .data$facts,
+                              color = .data$facts
+                          )) +
             geom_histogram(
                 aes(y = .data$..count..),
                 alpha = 0.1,
@@ -711,11 +770,11 @@ plot_dens = function(v1,
             geom_density(aes(y = .data$..count.. * my_binwidth), alpha = 0.3)
     } else {
         the_plot = ggplot(dens_dat,
-                        aes(
-                            x = .data$vals,
-                            fill = .data$facts,
-                            color = .data$facts
-                        )) +
+                          aes(
+                              x = .data$vals,
+                              fill = .data$facts,
+                              color = .data$facts
+                          )) +
             geom_density(aes(y = .data$..count.. / sum(.data$..count..)),
                          alpha = 0.3)
     }
@@ -753,9 +812,12 @@ plot_dens = function(v1,
     return(
         the_plot + scale_fill_manual(values = c('#004d00', '#8080ff'),
                                      name = factor_name) +
-            scale_color_manual(values = c('#004d00', '#8080ff'), guide = FALSE) +
+            scale_color_manual(
+                values = c('#004d00', '#8080ff'),
+                guide = FALSE
+            ) +
             geom_vline(
-                xintercept = c(xfunc(v1), xfunc(v2)),
+                xintercept = c(xfunc(.data$v1), xfunc(.data$v2)),
                 color = "#777777",
                 linetype = "dashed",
                 size = 0.5

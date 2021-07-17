@@ -42,11 +42,10 @@
 #'  character input is accepted (as a single string or a character vector;
 #'  case-insensitive): \code{"W"} (Shapiro-Wilk), \code{"K2"}
 #'  (D'Agostino-Pearson), \code{"A2"} (Anderson-Darling), \code{"JB"}
-#'  (Jarque-Bera); see \code{\link{norm_tests}}. The option \code{"all"} selects
-#'  all four previous tests at the same time.
-#'@param norm_plots If \code{TRUE} and \code{norm_tests} is not \code{"none"},
-#'  displays density, histogram, and Q-Q plots (and scatter plots for paired
-#'  tests) for the pooled residuals.#'
+#'  (Jarque-Bera); see \code{\link{norm_tests}}. The option \code{"all"} (or
+#'  \code{TRUE}) selects all four previous tests at the same time.
+#'@param norm_plots If \code{TRUE}, displays density, histogram, and Q-Q plots
+#'  (and scatter plots for paired tests) for the pooled residuals.
 #'@param var_tests Logical, \code{FALSE} by default. If \code{TRUE} (and there
 #'  are any between-subject factors), runs variance equality tests via
 #'  \code{\link{var_tests}} for all combinations of the between-subject factors
@@ -603,8 +602,9 @@ anova_neat = function(data_per_subject,
             this_data[, this_col] = to_fact(this_data[[this_col]])
         }
     }
+    ezANOVA = ez::ezANOVA
     a_text = paste0(
-        'ez::ezANOVA(data= this_data, dv=',
+        'ezANOVA(data= this_data, dv=',
         value_col,
         ', wid=',
         id_col,
@@ -639,10 +639,11 @@ anova_neat = function(data_per_subject,
                     ', whichModels = "withmain")'
                 )
         ))
-        if (is.null(within_vars) && length( to_c(between_vars) ) == 1 ) {
+        if (is.null(within_vars) && length(to_c(between_vars)) == 1) {
             bf_inc = as.vector(bf)
         } else {
             bf_inc = bayestestR::bayesfactor_inclusion(bf, match_models = TRUE)
+            bf_inc$BF = exp(bf_inc$log_BF)
             bf_inc = stats::setNames(object = bf_inc$BF, nm = rownames(bf_inc))
         }
         bf_models = bf
@@ -659,8 +660,15 @@ anova_neat = function(data_per_subject,
     } else {
         fitt = ez_anova_out$aov$fitted
     }
-    if (norm_tests  != 'none' &
+    if (norm_plots == TRUE &
+        (norm_tests == 'none' | norm_tests == FALSE)) {
+        norm_tests = 'all'
+    }
+    if (norm_tests != 'none' & norm_tests != FALSE &
         hush == FALSE) {
+        if (norm_tests == TRUE) {
+            norm_tests = 'all'
+        }
         prnt('--- Normality of the Residuals ---')
         norm_tests_in(
             var1 = resids,

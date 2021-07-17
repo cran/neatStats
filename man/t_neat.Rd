@@ -19,10 +19,12 @@ t_neat(
   auc_added = FALSE,
   r_added = TRUE,
   for_table = FALSE,
-  test_title = "Descriptives:",
+  test_title = NULL,
   round_descr = 2,
   round_auc = 3,
   auc_greater = "1",
+  cv_rep = FALSE,
+  cv_fold = 10,
   hush = FALSE,
   plots = FALSE,
   rug_size = 4,
@@ -55,18 +57,17 @@ two-sided.}
 is accepted (as a single string or a character vector; case-insensitive):
 \code{"W"} (Shapiro-Wilk), \code{"K2"} (D'Agostino-Pearson), \code{"A2"}
 (Anderson-Darling), \code{"JB"} (Jarque-Bera); see Notes. Two other options
-are \code{"all"} (to choose all four previous tests at the same time) or
-\code{"latent"} (default value; prints all tests only if
+are \code{"all"} ((same as \code{TRUE}; to choose all four previous tests at
+the same time) or \code{"latent"} (default value; prints all tests only if
 \code{nonparametric} is set to \code{FALSE} and any of the four tests gives
 a p value below .05). Each normality test is performed for the difference
 values between the two variables in case of paired samples, or for each of
 the two variables for unpaired samples. Set to \code{"none"} to disable
 (i.e., not to perform any normality tests).}
 
-\item{norm_plots}{If \code{TRUE} and \code{norm_tests} is not \code{"none"},
-displays density, histogram, and Q-Q plots (and scatter plots for paired
-tests) for each of the two variable (and differences for pairwise
-observations, in case of paired samples).}
+\item{norm_plots}{If \code{TRUE}, displays density, histogram, and Q-Q plots
+(and scatter plots for paired tests) for each of the two variable (and
+differences for pairwise observations, in case of paired samples).}
 
 \item{ci}{Numeric; confidence level for returned CIs for Cohen's d and AUC.}
 
@@ -81,9 +82,14 @@ by default). More samples (e.g. \code{10000}) take longer time but give more
 stable BF.}
 
 \item{auc_added}{Logical (\code{FALSE} by default). If \code{TRUE}, AUC is
-calculated and displayed (including TPR and TNR, i.e., true positive and
-true negative rates, i.e. sensitivity and specificity, using an optimal
-cutoff value, i.e. threshold, that provides maximal TPR and TNR).}
+calculated and displayed. Includes TPR and TNR, i.e., true positive and true
+negative rates, i.e. sensitivity and specificity, using an optimal cutoff
+value, i.e. threshold, that provides maximal TPR and TNR. These values may
+be cross-validated: see \code{cv_rep}. (Note that what is designated as
+"positive" or "negative" depends on the scenario: this function always
+assumes \code{var1} as positive and \code{var2} as negative. If your
+scenario or preference differs, you can simply switch the names or values
+when reporting the results.)}
 
 \item{r_added}{Logical. If \code{TRUE} (default), Pearson correlation is
 calculated and displayed in case of paired comparison.}
@@ -91,10 +97,9 @@ calculated and displayed in case of paired comparison.}
 \item{for_table}{Logical. If \code{TRUE}, omits the confidence level display
 from the printed text.}
 
-\item{test_title}{String, "Descriptives:" by default. Simply displayed in
-printing preceding the descriptive statistics. (Useful e.g. to distinguish
-several different comparisons inside a \code{function} or a \code{for}
-loop.)}
+\item{test_title}{\code{NULL} or string. If not \code{NULL}, simply displayed
+in printing preceding the statistics. (Useful e.g. to distinguish several
+different comparisons inside a \code{function} or a \code{for} loop.)}
 
 \item{round_descr}{Number \code{\link[=ro]{to round}} to the descriptive
 statistics (means and SDs).}
@@ -106,6 +111,19 @@ have greater values for 'cases' as opposed to 'controls': "1" (default;
 \code{var1} expected to be greater for 'cases' than \code{var2} mean) or "2"
 (\code{var2} expected to be greater for 'cases' than \code{var1}). Not to be
 confused with one-sided tests; see Details.}
+
+\item{cv_rep}{\code{FALSE} (default), \code{TRUE}, or numeric. If \code{TRUE}
+or numeric, a cross-validation is performed for the calculation of TPRs and
+TNRs. Numeric value specifies the number of repetitions, while, if
+\code{TRUE}, it defaults to \code{100} repetitions. In each repetition, the
+data is divided into \code{k} random parts ("folds"; see \code{cv_fold}),
+and the optimal accuracy is obtained k times from a k-1 training set
+(\code{var1} and \code{var2} truncated to equal length, if needed, in each
+case within each repetition), and the TPR and TNR are calculated from the
+remaining test set (different each time).}
+
+\item{cv_fold}{Numeric. The number of folds into which the data is divided for
+cross-validation (default: 10).}
 
 \item{hush}{Logical. If \code{TRUE}, prevents printing any details to console.}
 
@@ -151,14 +169,16 @@ Prints t-test statistics (including Cohen's d with CI, BF, and AUC, as
  (overall accuracy using the most optimal classification threshold), and
  \code{youden} (Youden's index: \code{specificity + sensitivity - 1}). The
  latter three are \code{NULL} when \code{auc_added} is \code{FALSE}. When
- \code{auc_added} is \code{TRUE}, there are also two additional elements of
- the list. One is '\code{roc_obj}', which is a \code{\link[pROC]{roc}}
- object, to be used e.g. with the \code{\link{roc_neat}} function. The other
- is '\code{best_thresholds}', which contains the best threshold value(s) for
- classification, along with corresponding specificity and sensitivity.
- Finally, if \code{plots} is \code{TRUE} (or \code{NULL}), the plot is
- displayed as well as returned as a \code{\link[ggplot2]{ggplot}} object,
- named \code{t_plot}.
+ \code{auc_added} is \code{TRUE}, there are also two or three additional
+ elements of the list. One is '\code{roc_obj}', which is a
+ \code{\link[pROC]{roc}} object, to be used e.g. with the
+ \code{\link{roc_neat}} function. Another is '\code{best_thresholds}', which
+ contains the best threshold value(s) for classification, along with
+ corresponding specificity and sensitivity. The third '\code{cv_results}'
+ contains the results, if any, of the cross-validation of TPRs and TNRs
+ (means per repetition). Finally, if \code{plots} is \code{TRUE} (or
+ \code{NULL}), the plot is displayed as well as returned as a
+ \code{\link[ggplot2]{ggplot}} object, named \code{t_plot}.
 }
 \description{
 Welch's \code{\link[stats:t.test]{t-test}} results including

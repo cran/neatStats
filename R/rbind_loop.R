@@ -21,7 +21,7 @@
 #'   named automatically (e.g. \code{X.value.}).
 #'@details In each call, all data passed to the function (via \code{...}) will
 #'  be merged into a single row, and that single row will be added to the
-#'  \code{merged} data frame
+#'  \code{merged} data frame.
 #'
 #'  See an extensive example via https://github.com/gasparl/neatstats.
 #'@seealso \code{\link{enum}}
@@ -121,10 +121,10 @@ rbind_loop = function(merged,
                     ' columns).')
         }
         pkg.globals$my_unique_first_iter = FALSE
-        assign(merged_str, to_merge, envir = .GlobalEnv)
+        assign(merged_str, to_merge, envir = parent.frame())
     } else if (pkg.globals$my_unique_first_iter  == FALSE) {
         assign(merged_str,
                plyr::rbind.fill(merged, to_merge),
-               envir = .GlobalEnv)
+               envir = parent.frame())
     }
 }
