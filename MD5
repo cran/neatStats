@@ -1,11 +1,11 @@
-5f83b4c135a371a16d1e625644fc5178 *DESCRIPTION
+68e3f5e167ad65bc914847a21ecd4546 *DESCRIPTION
 a8476ec7deb3df4affbb71e108a4e194 *LICENSE
 61a90821a9b5bb110c27fc95f8b09943 *NAMESPACE
 a966c888969e1e29c2b6928a2365ab8e *R/aggr_neat.R
 7eabbb482805024a686fc32acc36cc07 *R/anova_neat.R
 a95e6a259310ae27cb7c3bceb285fce6 *R/ci_from_p.R
 51f2f158146e0bcf35dd23699cb1c32e *R/corr_neat.R
-439e5a8d928dbb21792e51464014dfd4 *R/dems_neat.R
+44223eff69db51120f87072ed845e850 *R/dems_neat.R
 b67cde9f9987f2a5a876ff330097b642 *R/enum.R
 f54948faa57add187523504b3c603c67 *R/excl_neat.R
 0778ecbd07f16da047fa0b6cc69e6089 *R/imports.R
@@ -16,7 +16,7 @@ bcf9833f5ee16dae6a27167442c620b0 *R/neatStats.R
 a1a0ccc62fd9dcdff4a5c86d3ed1f095 *R/norm_tests.R
 8d82fbcf09b182c3b168569887d87658 *R/path_neat.R
 79ec80dd829db353aa4dccb2e62725c0 *R/peek_neat.R
-9b43fe4424b614735c629a82d1935ec4 *R/plot_neat.R
+e36573c06152ac6d8250ea5e794ebd88 *R/plot_neat.R
 54612efc4ba51297f005d04e884f088d *R/props_neat.R
 c336e0fb839cca7f4145362947d93c2c *R/rbind_loop.R
 d5c0329ce85835eb6053d2ec6a1eeba5 *R/read_dir.R
@@ -28,7 +28,7 @@ a052e843d9f956987bff216115150cb4 *R/table_neat.R
 7ef44f7dbe5222e50b7352eac89ab83b *R/var_tests.R
 68d1aff5613fc2c2cccd4384d7c0aea6 *R/zzz.R
 4d757c16fdaf38ccfdd870c2140eb5b9 *README.md
-e59eee9c6acf4765ca62e4b8dfe17904 *build/partial.rdb
+0909e23d880de4dfe0ba2daa34f73af3 *build/partial.rdb
 453451decb498f2a11a59a1df5676f89 *man/aggr_neat.Rd
 98d192df4ae3d7f27c72e28802d3cf15 *man/anova_neat.Rd
 cc2d3193d6ab4cbfd31c2479e34e387e *man/ci_from_p.Rd
