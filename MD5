@@ -1,4 +1,4 @@
-939c33b835f5b864e2834b7800f027fc *DESCRIPTION
+81e8f4a59e9cb01d334e3665ea47d047 *DESCRIPTION
 a8476ec7deb3df4affbb71e108a4e194 *LICENSE
 a474723cba7a668e2472961976e6d848 *NAMESPACE
 a966c888969e1e29c2b6928a2365ab8e *R/aggr_neat.R
@@ -13,9 +13,9 @@ f54948faa57add187523504b3c603c67 *R/excl_neat.R
 f73831a1927f9ac889f73ef0701ad524 *R/mean_ci.R
 7c191f7a54208fe2a6325bfb81289cc9 *R/mon_neat.R
 bcf9833f5ee16dae6a27167442c620b0 *R/neatStats.R
-a1a0ccc62fd9dcdff4a5c86d3ed1f095 *R/norm_tests.R
+ee5be9540a1c4dac516713437501957c *R/norm_tests.R
 8d82fbcf09b182c3b168569887d87658 *R/path_neat.R
-79ec80dd829db353aa4dccb2e62725c0 *R/peek_neat.R
+51d3d095deb838fa44328a29c52ea7b6 *R/peek_neat.R
 e36573c06152ac6d8250ea5e794ebd88 *R/plot_neat.R
 54612efc4ba51297f005d04e884f088d *R/props_neat.R
 c336e0fb839cca7f4145362947d93c2c *R/rbind_loop.R
@@ -24,12 +24,12 @@ c8a5be0c6053f2950a4acc56b1d5d47e *R/ro.R
 bf431ddbfa015f34f05833b07e502e3d *R/roc_neat.R
 729f63f96c35551b9ad874dd798369e9 *R/sd_ci.R
 3a963e0748ff8076bc6bba320f539fdd *R/se.R
-605cc296755b0102e4cd3e4f25489318 *R/t_neat.R
+85857996a49b525d11b0e25b563fcfcc *R/t_neat.R
 a052e843d9f956987bff216115150cb4 *R/table_neat.R
 33f9dad4a368ccf77e7c406b64f1f2f1 *R/var_tests.R
 68d1aff5613fc2c2cccd4384d7c0aea6 *R/zzz.R
 4d757c16fdaf38ccfdd870c2140eb5b9 *README.md
-8c3848d68be99fa21b5edd9362c9c36e *build/partial.rdb
+773ed7c87333a492a40c34b57d171da7 *build/partial.rdb
 453451decb498f2a11a59a1df5676f89 *man/aggr_neat.Rd
 98d192df4ae3d7f27c72e28802d3cf15 *man/anova_neat.Rd
 cc2d3193d6ab4cbfd31c2479e34e387e *man/ci_from_p.Rd
@@ -41,7 +41,7 @@ d724d71f7f0fe74d3f16d1ab2805e141 *man/mean_ci.Rd
 dec6e6371cb954719e7c4091fbed5906 *man/mon_conv.Rd
 5389bc85596187d028e800b0a33ee2af *man/mon_neat.Rd
 43fc92047265a3211cdc40320cd661e9 *man/neatStats-package.Rd
-34ae034007868953e62ec4b4a0a9323b *man/norm_tests.Rd
+74f7f2691d01a326bc492c50bbd1747e *man/norm_tests.Rd
 ce745dbbd9994451c8711fde72d8bdc5 *man/path_neat.Rd
 9545656b271fd423b3e2f91983c10928 *man/peek_neat.Rd
 4ca4b261dec09df4d72c3fc34666bfc0 *man/plot_neat.Rd
@@ -52,6 +52,6 @@ ce745dbbd9994451c8711fde72d8bdc5 *man/path_neat.Rd
 405b2032f751de7f2d6e11787c1fa948 *man/roc_neat.Rd
 2629749725f052330ee2258a4edf8ea4 *man/sd_ci.Rd
 22e83b503679ff596b57f99ab10e6486 *man/se.Rd
-251855cc2c9cf616be5d9876a0bd4c23 *man/t_neat.Rd
+a6bd17ad9a880250f8b19da66637e3b9 *man/t_neat.Rd
 0e6048613ef4740fec7fa27eb30a4ea2 *man/table_neat.Rd
 85d5bec17dabc950fd81f786187aa05b *man/var_tests.Rd

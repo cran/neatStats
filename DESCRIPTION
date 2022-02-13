@@ -1,7 +1,7 @@
 Package: neatStats
 Title: Neat and Painless Statistical Reporting
-Version: 1.8.1
-Date: 2021-11-07
+Version: 1.9.0
+Date: 2022-02-13
 Authors@R: c(person("Gáspár", "Lukács", email = "lkcsgaspar@gmail.com", role =
   c("aut", "cre"), comment = c(ORCID = "0000-0001-9401-4830")), person("Bennett",
   "Kleinberg", email = "bennettkleinberg@gmail.com", role = c("ctb"), comment =
@@ -15,18 +15,18 @@ Description: User-friendly, clear and simple statistics, primarily for
   experimental designs.
 URL: https://github.com/gasparl/neatstats
 Depends: R (>= 3.6.0)
-Imports: viridis, PoweR, plyr, bayestestR, pROC, MBESS, car, ez,
+Imports: viridis, fBasics, plyr, bayestestR, pROC, MBESS, car, ez,
         BayesFactor, Exact, ggplot2, ggpubr, logspline, grDevices,
         stats, graphics
 Suggests: rstudioapi
 License: BSD_2_clause + file LICENSE
 Encoding: UTF-8
-RoxygenNote: 7.1.1
+RoxygenNote: 7.1.2
 NeedsCompilation: no
-Packaged: 2021-11-07 11:17:12 UTC; gaspar
+Packaged: 2022-02-13 03:00:09 UTC; gaspar
 Author: Gáspár Lukács [aut, cre] (<https://orcid.org/0000-0001-9401-4830>),
   Bennett Kleinberg [ctb] (<https://orcid.org/0000-0003-1658-9086>),
   Johnny van Doorn [ctb] (<https://orcid.org/0000-0003-0270-096X>)
 Maintainer: Gáspár Lukács <lkcsgaspar@gmail.com>
 Repository: CRAN
-Date/Publication: 2021-11-07 15:50:02 UTC
+Date/Publication: 2022-02-13 18:50:07 UTC
