@@ -40,10 +40,10 @@
 #'@param norm_tests Normality tests for the pooled ANOVA residuals
 #'  (\code{"none"} by default, giving no tests). Any or all of the following
 #'  character input is accepted (as a single string or a character vector;
-#'  case-insensitive): \code{"W"} (Shapiro-Wilk), \code{"K2"}
-#'  (D'Agostino-Pearson), \code{"A2"} (Anderson-Darling), \code{"JB"}
-#'  (Jarque-Bera); see \code{\link{norm_tests}}. The option \code{"all"} (or
-#'  \code{TRUE}) selects all four previous tests at the same time.
+#'  case-insensitive): \code{"W"} (Shapiro-Wilk), \code{"K2"} (D'Agostino),
+#'  \code{"A2"} (Anderson-Darling), \code{"JB"} (Jarque-Bera); see
+#'  \code{\link{norm_tests}}. The option \code{"all"} (or \code{TRUE}) selects
+#'  all four previous tests at the same time.
 #'@param norm_plots If \code{TRUE}, displays density, histogram, and Q-Q plots
 #'  (and scatter plots for paired tests) for the pooled residuals.
 #'@param var_tests Logical, \code{FALSE} by default. If \code{TRUE} (and there
@@ -518,9 +518,9 @@ anova_neat = function(data_per_subject,
     }
     data_wide = data_per_subject
     name_taken('within_factor', data_wide)
-    name_taken('neat_unique_values', data_wide)
-    name_taken('neat_unique_id', data_wide)
-    id_col = 'neat_unique_id'
+    name_taken('..neat_values', data_wide)
+    name_taken('..neat_id', data_wide)
+    id_col = '..neat_id'
     data_wide[[id_col]] = as.character(seq.int(nrow(data_wide)))
     w_anova = NULL
     if (length(values) > 1) {
@@ -531,7 +531,7 @@ anova_neat = function(data_per_subject,
             varying = values,
             idvar = id_col,
             timevar = "within_factor",
-            v.names = "neat_unique_values",
+            v.names = "..neat_values",
             times = values
         )
         if (length(within_ids) > 1) {
@@ -554,7 +554,7 @@ anova_neat = function(data_per_subject,
         } else {
             within_vars = 'within_factor'
         }
-        value_col = "neat_unique_values"
+        value_col = "..neat_values"
         this_data = data_reshaped
     } else {
         value_col = values

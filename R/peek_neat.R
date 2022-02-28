@@ -121,7 +121,7 @@ peek_neat = function(dat,
                       val_arg(round_to, c('num'), 1),
                       val_arg(group_n, c('bool'), 1)
                   ))
-    name_taken('neat_unique_values', dat)
+    name_taken('..neat_values', dat)
     values = values[!values %in% group_by]
     if (length(values) > 1) {
         if (is.null(collapse)) {
@@ -130,7 +130,7 @@ peek_neat = function(dat,
                 direction = 'long',
                 varying = values,
                 timevar = "within_factor",
-                v.names = "neat_unique_values",
+                v.names = "..neat_values",
                 times = values
             )
             if (is.null(group_by)) {
@@ -139,11 +139,11 @@ peek_neat = function(dat,
                 group_by = c(group_by, "within_factor")
             }
         } else {
-            dat$neat_unique_values = apply(subset(dat, select = values),
+            dat$..neat_values = apply(subset(dat, select = values),
                                            1, collapse, na.rm = TRUE)
         }
     } else if (values %in% names(dat)) {
-        dat$neat_unique_values = dat[[values]]
+        dat$..neat_values = dat[[values]]
     } else {
         stop("Column name specified for values not found.")
     }
@@ -182,7 +182,7 @@ peek_neat = function(dat,
         group_by = as.factor(rep('0', nrow(dat)))
     }
     dat_merg = data.frame()
-    vals = dat$neat_unique_values
+    vals = dat$..neat_values
     plot_list = list()
     for (grp in unique(group_by)) {
         if (length(unique(group_by)) > 1) {
@@ -194,13 +194,13 @@ peek_neat = function(dat,
         } else {
             to_merg = f_print(valstemp)
         }
-        if (class(to_merg) == 'data.frame' |
+        if (inherits(to_merg, "data.frame") |
             length(names(to_merg)[(names(to_merg) != "")]) == length(to_merg)) {
             dat_merg = rbind(dat_merg, data.frame(as.list((to_merg))))
         }
         valstemp = valstemp[!is.na(valstemp)]
         if (!is.null(f_plot) &&
-            length(valstemp) > 0 && class(f_plot) != "character") {
+            length(valstemp) > 0 && (!inherits(f_plot, "character"))) {
             if (group_n == TRUE) {
                 xtitl = paste0(grp, '\n(n = ',
                                length(valstemp), ')')
@@ -213,7 +213,7 @@ peek_neat = function(dat,
     }
     if (is.null(f_plot)) {
         graphics::plot(box_neat(vals, group_by, group_n = group_n))
-    } else if (class(f_plot) != "character") {
+    } else if (!inherits(f_plot, "character")) {
         graphics::plot(ggpubr::ggarrange(plotlist = plot_list))
     }
     invisible(dat_merg)
